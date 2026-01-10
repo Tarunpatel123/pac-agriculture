@@ -9,9 +9,10 @@ dotenv.config();
 connectDB();
 const app = express();
 app.use(cors({
-  origin: "*", // You can change this to your Netlify URL later for security
+  origin: true, // This allows the origin of the request (Netlify)
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "x-admin-secret"]
+  credentials: true,
+  allowedHeaders: ["Content-Type", "x-admin-secret", "Authorization"]
 }));
 app.use(express.json());
 
