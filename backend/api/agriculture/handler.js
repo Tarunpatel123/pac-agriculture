@@ -6,26 +6,52 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db.js");
 
 dotenv.config();
-connectDB();
+
 const app = express();
+
+// Database connection logic (Connect only when needed)
+const connectToDatabase = async () => {
+  try {
+    await connectDB();
+  } catch (error) {
+    console.error("Critical: Could not connect to MongoDB", error);
+  }
+};
+
 app.use(cors({
-  origin: true, // This allows the origin of the request (Netlify)
+  origin: true,
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
   allowedHeaders: ["Content-Type", "x-admin-secret", "Authorization"]
 }));
+
 app.use(express.json());
 
-
+// Add a middleware to ensure DB is connected
+app.use(async (req, res, next) => {
+  await connectToDatabase();
+  next();
+});
 
 const userRoutes = require("./router/routes.js");
 app.use("/api", userRoutes);
 
 app.get("/", (req, res) => {
-  res.send("PAC Agriculture API is running...");
+  res.status(200).json({ 
+    message: "PAC Agriculture API is running...",
+    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
+    timestamp: new Date().toISOString()
+  });
 });
 
-
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    error: "Internal Server Error", 
+    message: err.message 
+  });
+});
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== 'production') {
