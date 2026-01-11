@@ -12,6 +12,8 @@ const Admin = () => {
   const [showLinkGen, setShowLinkGen] = useState(false);
   const [customLink, setCustomLink] = useState('');
   const [linkSource, setLinkSource] = useState('instagram');
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
   const ADMIN_SECRET = 'pac-admin-2026'; // This should ideally be in .env but for simplicity
@@ -26,8 +28,8 @@ const Admin = () => {
     }
   };
 
-  const fetchStats = async () => {
-    setLoading(true);
+  const fetchStats = async (isAuto = false) => {
+    if (!isAuto) setLoading(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/api/admin/stats`, {
         headers: {
@@ -35,12 +37,25 @@ const Admin = () => {
         }
       });
       setStats(response.data);
-      setLoading(false);
+      setLastUpdated(new Date());
+      if (!isAuto) setLoading(false);
     } catch (err) {
-      setError('Failed to fetch data');
-      setLoading(false);
+      if (!isAuto) {
+        setError('Failed to fetch data');
+        setLoading(false);
+      }
     }
   };
+
+  useEffect(() => {
+    let interval;
+    if (isAuthenticated && autoRefresh) {
+      interval = setInterval(() => {
+        fetchStats(true);
+      }, 30000); // Refresh every 30 seconds
+    }
+    return () => clearInterval(interval);
+  }, [isAuthenticated, autoRefresh]);
 
   const updateStatus = async (id, status) => {
     try {
@@ -223,7 +238,21 @@ const Admin = () => {
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 pt-24">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+            <div className="flex items-center gap-3 mt-1">
+              <span className={`flex h-2 w-2 rounded-full ${autoRefresh ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
+              <p className="text-xs text-gray-500 font-medium">
+                {autoRefresh ? 'Auto-refreshing every 30s' : 'Auto-refresh off'} • Last updated: {lastUpdated.toLocaleTimeString()}
+              </p>
+              <button 
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                className="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-0.5 rounded transition"
+              >
+                {autoRefresh ? 'Pause' : 'Resume'}
+              </button>
+            </div>
+          </div>
           <div className="flex gap-4">
             <button 
               onClick={() => setShowLinkGen(!showLinkGen)}
