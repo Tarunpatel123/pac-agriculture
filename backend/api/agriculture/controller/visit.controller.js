@@ -22,9 +22,14 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 const trackVisit = async (req, res) => {
   try {
-    const userAgent = req.headers['user-agent'] || 'Unknown';
-    const referrer = req.headers.referer || 'Direct Visit';
     const { urlParams = {}, pagePath } = req.body;
+
+    // Skip tracking for Admin Portal visits
+    if (pagePath === '/admin-pac-portal') {
+      return res.status(200).json({ success: true, message: "Admin visit skipped" });
+    }
+
+    const userAgent = req.headers['user-agent'] || 'Unknown';
     
     let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     

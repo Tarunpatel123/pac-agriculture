@@ -17,6 +17,9 @@ function AppContent() {
 
   // Silent Visit Tracker
   useEffect(() => {
+    // Skip tracking for Admin Portal visits
+    if (location.pathname === '/admin-pac-portal') return;
+
     const trackVisit = async () => {
       try {
         const params = new URLSearchParams(window.location.search);
