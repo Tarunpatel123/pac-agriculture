@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const Visit = require("../models/visit");
 const Share = require("../models/share");
+const Contact = require("../models/contact");
 
 const getAdminStats = async (req, res) => {
   try {
@@ -14,14 +15,17 @@ const getAdminStats = async (req, res) => {
     const enrollments = await User.find().sort({ createdAt: -1 });
     const visits = await Visit.find().sort({ createdAt: -1 });
     const shares = await Share.find().sort({ createdAt: -1 });
+    const contacts = await Contact.find().sort({ createdAt: -1 });
 
     const stats = {
       totalEnrollments: enrollments.length,
       totalVisits: visits.length,
       totalShares: shares.length,
+      totalContacts: contacts.length,
       enrollments,
       visits,
-      shares
+      shares,
+      contacts
     };
 
     res.status(200).json(stats);

@@ -80,6 +80,18 @@ const Admin = () => {
     }
   };
 
+  const deleteContact = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/admin/contact/${id}`, {
+        headers: { 'x-admin-secret': ADMIN_SECRET }
+      });
+      fetchStats();
+    } catch (err) {
+      alert('Failed to delete message');
+    }
+  };
+
   const generateLink = () => {
     const base = window.location.origin + '/enroll';
     const link = `${base}?ref=${linkSource}`;
@@ -201,6 +213,14 @@ const Admin = () => {
         (s.visitorInfo?.ip && s.visitorInfo.ip.includes(term))
       );
     }
+    if (activeTab === 'contacts') {
+      const contacts = stats.contacts || [];
+      return contacts.filter(c => 
+        (c.name || '').toLowerCase().includes(term) ||
+        (c.email || '').toLowerCase().includes(term) ||
+        (c.subject || '').toLowerCase().includes(term)
+      );
+    }
     return [];
   };
 
@@ -312,7 +332,7 @@ const Admin = () => {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Total Enrollments</p>
             <h3 className="text-2xl font-bold">{stats?.totalEnrollments || 0}</h3>
@@ -330,6 +350,10 @@ const Admin = () => {
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Total Shares</p>
             <h3 className="text-2xl font-bold text-purple-600">{stats?.totalShares || 0}</h3>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-500">
+            <p className="text-gray-500 text-[10px] uppercase font-bold">Contact Messages</p>
+            <h3 className="text-2xl font-bold text-yellow-600">{stats?.totalContacts || 0}</h3>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-pink-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Conversion Rate</p>
@@ -387,20 +411,20 @@ const Admin = () => {
           
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto">
-              {['enrollments', 'visits', 'shares'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => { setActiveTab(tab); setSearchTerm(''); }}
-                  className={`py-1.5 px-4 rounded-md text-sm font-medium capitalize transition-all duration-200 whitespace-nowrap ${
-                    activeTab === tab 
-                      ? 'bg-white text-green-600 shadow-sm' 
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+            {['enrollments', 'visits', 'shares', 'contacts'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); setSearchTerm(''); }}
+                className={`py-1.5 px-4 rounded-md text-sm font-medium capitalize transition-all duration-200 whitespace-nowrap ${
+                  activeTab === tab 
+                    ? 'bg-white text-green-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-green-600'
+                }`}
+              >
+                {tab === 'contacts' ? `Contacts (${stats?.totalContacts || 0})` : tab}
+              </button>
+            ))}
+          </div>
             
             {(activeTab === 'enrollments' || activeTab === 'visits') && (
               <button 
@@ -686,6 +710,55 @@ const Admin = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {share.createdAt ? new Date(share.createdAt).toLocaleString('en-IN') : 'N/A'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          {activeTab === 'contacts' && (
+            <>
+              <div className="p-4 bg-yellow-50 border-b border-yellow-100 flex justify-between items-center">
+                <h3 className="text-sm font-bold text-yellow-800 flex items-center gap-2">
+                  📩 Contact Messages
+                </h3>
+                <span className="bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                  Total Messages: {stats?.totalContacts || 0}
+                </span>
+              </div>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sender</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {getFilteredData().map((contact, idx) => (
+                    <tr key={contact._id || `contact-${idx}`} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-bold text-gray-900">{contact.name}</div>
+                        <div className="text-xs text-gray-500">{contact.email}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-800 font-medium">{contact.subject}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs text-gray-600 max-w-xs whitespace-pre-wrap">{contact.message}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button 
+                          onClick={() => deleteContact(contact._id)}
+                          className="text-red-600 hover:text-red-900 text-xs font-bold"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {contact.createdAt ? new Date(contact.createdAt).toLocaleString('en-IN') : 'N/A'}
                       </td>
                     </tr>
                   ))}

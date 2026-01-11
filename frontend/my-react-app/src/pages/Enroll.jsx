@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 
 const Enroll = () => {
   const [formData, setFormData] = useState(() => {
@@ -58,15 +59,34 @@ const Enroll = () => {
       });
 
       if (response.ok) {
+        Swal.fire({
+          title: 'Success!',
+          text: 'आपका पंजीकरण सफल रहा। हम आपसे जल्द ही संपर्क करेंगे।',
+          icon: 'success',
+          confirmButtonColor: '#16a34a',
+          confirmButtonText: 'OK'
+        });
         setStatus('success');
         setFormData({ fullName: '', mobileNumber: '', email: '', currentClass: '', interested_Course: '', instagramId: '' });
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('API Error:', response.status, errorData);
+        Swal.fire({
+          title: 'Error!',
+          text: 'कुछ गलत हो गया। कृपया फिर से प्रयास करें।',
+          icon: 'error',
+          confirmButtonColor: '#dc2626'
+        });
         setStatus('error');
       }
     } catch (error) {
       console.error('Network/Connection Error:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'सर्वर से संपर्क नहीं हो पाया।',
+        icon: 'error',
+        confirmButtonColor: '#dc2626'
+      });
       setStatus('error');
     }
   };
