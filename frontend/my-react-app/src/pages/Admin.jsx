@@ -283,7 +283,7 @@ const Admin = () => {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Total Enrollments</p>
             <h3 className="text-2xl font-bold">{stats?.totalEnrollments || 0}</h3>
@@ -299,6 +299,10 @@ const Admin = () => {
             </h3>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500">
+            <p className="text-gray-500 text-[10px] uppercase font-bold">Total Shares</p>
+            <h3 className="text-2xl font-bold text-purple-600">{stats?.totalShares || 0}</h3>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-pink-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Conversion Rate</p>
             <h3 className="text-2xl font-bold">
               {stats?.totalEnrollments > 0 
@@ -625,6 +629,15 @@ const Admin = () => {
           )}
 
           {activeTab === 'shares' && (
+            <>
+              <div className="p-4 bg-purple-50 border-b border-purple-100 flex justify-between items-center">
+                <h3 className="text-sm font-bold text-purple-800 flex items-center gap-2">
+                  📢 Website Share Activity
+                </h3>
+                <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                  Total Shares: {stats?.totalShares || 0}
+                </span>
+              </div>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -649,10 +662,11 @@ const Admin = () => {
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
-        )}
-      </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
     </div>
   );
 };
