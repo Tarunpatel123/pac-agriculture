@@ -4,10 +4,10 @@ const jwt = require("jsonwebtoken");
 
 const signup = async (req, res) => {
     try {
-        const { fullName, email, mobileNumber, password, currentClass, location } = req.body;
+        const { fullName, email, mobileNumber, password, location } = req.body;
 
         // Validation
-        if (!fullName || !email || !mobileNumber || !password || !currentClass || !location) {
+        if (!fullName || !email || !mobileNumber || !password || !location) {
             return res.status(400).json({ message: "All fields are required including location" });
         }
 
@@ -26,7 +26,6 @@ const signup = async (req, res) => {
             email,
             mobileNumber,
             password: hashedPassword,
-            currentClass,
             location
         });
 
