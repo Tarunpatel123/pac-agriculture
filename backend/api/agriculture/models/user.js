@@ -20,8 +20,26 @@ const userSchema = new mongoose.Schema(
       required: true
     },
 
+    password: {
+      type: String,
+      required: true
+    },
     currentClass: {
-      type: String
+      type: String,
+      required: false
+    },
+    location: {
+      type: {
+        lat: Number,
+        lng: Number,
+        address: String
+      },
+      required: true
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user'
     },
     interested_Course: {
       type: String
@@ -38,10 +56,6 @@ const userSchema = new mongoose.Schema(
     distance: {
       type: Number, // Distance in KM
       default: null
-    },
-    location: {
-      type: String, // City/Region from IP or GPS
-      default: 'Unknown'
     }
   },
   {

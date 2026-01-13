@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
+import bookImage from '../assets/images/book.webp';
 
 const Hero = () => {
   return (
     <div className="relative w-full h-[600px] bg-gray-900">
       {/* Background Image */}
       <img 
-        src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop" 
+        src={bookImage} 
         alt="Agriculture Field" 
         className="w-full h-full object-cover opacity-60"
       />

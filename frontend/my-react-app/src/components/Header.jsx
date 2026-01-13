@@ -1,9 +1,24 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/images/logo.jpeg';
+import Swal from 'sweetalert2';
 
-const Header = () => {
+const Header = ({ user, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    onLogout();
+    Swal.fire({
+      title: 'Logged Out',
+      text: 'You have been successfully logged out.',
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false
+    });
+    navigate('/');
+    setIsMenuOpen(false);
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -63,6 +78,26 @@ const Header = () => {
 
           {/* Desktop Right Nav */}
           <nav className="hidden md:flex items-center justify-end space-x-6 flex-1">
+            {user ? (
+              <>
+                {user.role === 'admin' && (
+                  <Link to="/admin-pac-portal" className="text-green-700 font-black hover:text-green-900 transition flex items-center gap-1">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Admin
+                  </Link>
+                )}
+                <span className="text-gray-500 font-bold hidden lg:inline">Hi, {user.fullName.split(' ')[0]}</span>
+                <button 
+                  onClick={handleLogout}
+                  className="text-red-600 hover:text-red-800 font-bold transition"
+                >
+                  Logout
+                </button>
+              </>
+            ) : null}
             <button 
               onClick={handleShare}
               className="flex items-center space-x-2 text-green-700 hover:text-green-800 font-bold transition"
@@ -95,6 +130,19 @@ const Header = () => {
           <Link to="/" onClick={() => setIsMenuOpen(false)} className="block text-gray-700 hover:text-green-700 font-bold py-2">Home</Link>
           <Link to="/courses" onClick={() => setIsMenuOpen(false)} className="block text-gray-700 hover:text-green-700 font-bold py-2">Courses</Link>
           <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="block text-gray-700 hover:text-green-700 font-bold py-2">Contact</Link>
+          {user ? (
+            <>
+              {user.role === 'admin' && (
+                <Link to="/admin-pac-portal" onClick={() => setIsMenuOpen(false)} className="block text-green-700 font-bold py-2">Admin Portal</Link>
+              )}
+              <button 
+                onClick={handleLogout}
+                className="block w-full text-left text-red-600 font-bold py-2"
+              >
+                Logout ({user.fullName.split(' ')[0]})
+              </button>
+            </>
+          ) : null}
           <button 
             onClick={() => { handleShare(); setIsMenuOpen(false); }}
             className="w-full flex items-center justify-center space-x-2 text-green-700 hover:text-green-800 font-bold py-2 border-t border-green-200"

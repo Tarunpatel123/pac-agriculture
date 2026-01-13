@@ -3,8 +3,13 @@ const visitController = require('../controller/visit.controller');
 const shareController = require('../controller/share.controller');
 const adminController = require('../controller/admin.controller');
 const contactController = require('../controller/contact.controller');
+const authController = require('../controller/auth.controller');
 const express = require('express');
 const router = express.Router();  
+
+// Auth Routes
+router.post('/auth/signup', authController.signup);
+router.post('/auth/login', authController.login);
 
 // User Registration
 router.post('/register', userController.createUser);
