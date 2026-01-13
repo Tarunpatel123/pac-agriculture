@@ -2,11 +2,19 @@ import { Link } from 'react-router-dom';
 import bookImage from '../assets/images/book.webp';
 
 const Hero = () => {
+  const sunriseImage = "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80";
+
   return (
-    <div className="relative w-full h-[600px] bg-gradient-to-br from-green-950 via-gray-900 to-emerald-950 overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/10 rounded-full blur-[120px] animate-pulse"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse delay-1000"></div>
+    <div className="relative w-full h-[600px] bg-gray-900 overflow-hidden">
+      {/* Background Image */}
+      <img 
+        src={sunriseImage} 
+        alt="Sun Rise over Field" 
+        className="absolute inset-0 w-full h-full object-cover opacity-60"
+      />
+      
+      {/* Background Overlay for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60"></div>
       
       {/* Content Overlay */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
