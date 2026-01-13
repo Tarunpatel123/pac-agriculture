@@ -158,35 +158,76 @@ const Home = () => {
             <h2 className="text-4xl md:text-6xl font-black text-gray-900 mt-2">Campus Life</h2>
             <div className="w-24 h-2 bg-gradient-to-r from-green-600 to-emerald-600 mx-auto mt-6 rounded-full"></div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {[
               {
                 url: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
                 tag: "Expert Teaching"
               },
               {
-                url: logoImage,
-                tag: "PAC Barwaha"
+                url: bookImage,
+                tag: "Library"
               },
               {
-                url: bookImage,
-                tag: "Lab Work"
+                url: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                tag: "Study Group"
               },
               {
                 url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
                 tag: "Campus Life"
+              },
+              {
+                url: logoImage,
+                tag: "PAC Barwaha",
+                isCenter: true
+              },
+              {
+                url: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                tag: "Lab Work"
+              },
+              {
+                url: "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                tag: "Agriculture Field"
+              },
+              {
+                url: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                tag: "Practical Learning"
+              },
+              {
+                url: "https://images.unsplash.com/photo-1517245318773-b7b85cf7f3cf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                tag: "Seminar Hall"
               }
             ].map((item, i) => (
-              <div key={i} className="group relative overflow-hidden rounded-[2rem] h-[400px] shadow-2xl transition-all duration-700 hover:-translate-y-2">
-                <img src={item.url} alt={item.tag} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-green-900/90 via-green-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-8">
-                  <span className="bg-white/20 backdrop-blur-md text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest w-fit mb-3">
-                    {item.tag}
-                  </span>
-                  <p className="text-white font-black text-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    Excellence in {item.tag}
-                  </p>
-                </div>
+              <div 
+                key={i} 
+                className={`group relative overflow-hidden rounded-[2.5rem] shadow-2xl transition-all duration-700 hover:-translate-y-2 ${
+                  item.isCenter ? 'h-[300px] md:h-full lg:h-[400px] border-4 border-green-500 bg-white' : 'h-[300px] md:h-[350px] lg:h-[400px]'
+                }`}
+              >
+                <img 
+                  src={item.url} 
+                  alt={item.tag} 
+                  className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${
+                    item.isCenter ? 'object-contain p-8' : 'object-cover'
+                  }`} 
+                />
+                {!item.isCenter && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-green-900/90 via-green-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-8">
+                    <span className="bg-white/20 backdrop-blur-md text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest w-fit mb-3">
+                      {item.tag}
+                    </span>
+                    <p className="text-white font-black text-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                      {item.tag}
+                    </p>
+                  </div>
+                )}
+                {item.isCenter && (
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-green-900/10 backdrop-blur-sm">
+                    <span className="bg-green-600 text-white px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest shadow-xl">
+                      {item.tag}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
