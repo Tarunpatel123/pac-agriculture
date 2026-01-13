@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import logo from '../assets/images/logo.jpeg';
 
 const Footer = () => {
   return (
@@ -8,7 +9,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <div className="text-2xl font-bold flex items-center mb-4">
-              <span className="text-3xl mr-2">🎓</span>
+              <img src={logo} alt="PAC Barwaha Logo" className="h-12 w-12 mr-3 rounded-full border-2 border-green-500 bg-white object-contain" />
               <span>PAC Barwaha</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed max-w-sm">

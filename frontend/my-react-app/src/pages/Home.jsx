@@ -161,20 +161,20 @@ const Home = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                url: bookImage,
-                tag: "Classroom"
+                url: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                tag: "Expert Teaching"
               },
               {
                 url: logoImage,
-                tag: "Agriculture"
+                tag: "PAC Barwaha"
               },
               {
                 url: bookImage,
                 tag: "Lab Work"
               },
               {
-                url: logoImage,
-                tag: "Field Study"
+                url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                tag: "Campus Life"
               }
             ].map((item, i) => (
               <div key={i} className="group relative overflow-hidden rounded-[2rem] h-[400px] shadow-2xl transition-all duration-700 hover:-translate-y-2">
