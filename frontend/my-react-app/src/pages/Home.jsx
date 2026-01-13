@@ -114,27 +114,23 @@ const Home = () => {
       {/* Video Showcase Section - Expanded Width */}
       <div className="mt-32 bg-[#0a0f0d] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] border-y border-white/5">
         <div className="max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-12">
-          <div className="lg:col-span-3 p-6 md:p-12 flex flex-col justify-center space-y-4 relative">
+          <div className="lg:col-span-2 p-4 md:p-8 flex flex-col justify-center space-y-3 relative">
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-600/10 to-transparent"></div>
-            <span className="text-green-400 font-black uppercase tracking-[0.2em] text-[10px] relative">Experience PAC</span>
-            <h2 className="text-3xl md:text-4xl font-black text-white leading-tight relative">
-              Watch Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">Learning</span>
+            <span className="text-green-400 font-black uppercase tracking-[0.2em] text-[8px] relative">Experience</span>
+            <h2 className="text-2xl md:text-3xl font-black text-white leading-tight relative">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">PAC</span>
             </h2>
-            <p className="text-gray-400 text-sm leading-relaxed relative font-medium max-w-[200px]">
-              PAC Barwaha: आधुनिक तकनीक और प्रैक्टिकल अनुभव।
-            </p>
-            <div className="flex items-center space-x-3 relative">
+            <div className="flex items-center space-x-2 relative">
               <div className="group cursor-pointer">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(34,197,94,0.4)] group-hover:scale-110 transition-transform">
-                  <svg className="w-6 h-6 fill-current" viewBox="0 0 20 20">
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(34,197,94,0.4)] group-hover:scale-110 transition-transform">
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
                     <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.333-5.89a1.5 1.5 0 000-2.538L6.3 2.841z" />
                   </svg>
                 </div>
               </div>
-              <p className="text-white font-black text-sm">Virtual Tour</p>
             </div>
           </div>
-          <div className="lg:col-span-9 relative aspect-video lg:aspect-auto h-full min-h-[700px] lg:min-h-[950px]">
+          <div className="lg:col-span-10 relative aspect-video lg:aspect-auto h-full min-h-[750px] lg:min-h-[1000px]">
             <video 
               className="absolute inset-0 w-full h-full object-cover"
               autoPlay 
