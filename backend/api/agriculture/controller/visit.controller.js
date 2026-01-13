@@ -30,6 +30,7 @@ const trackVisit = async (req, res) => {
     }
 
     const userAgent = req.headers['user-agent'] || 'Unknown';
+    const referrer = req.headers['referer'] || req.headers['referrer'] || 'Direct';
     
     let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     

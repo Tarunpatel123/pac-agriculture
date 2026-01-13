@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import axios from 'axios';
 
 const Contact = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,9 +31,16 @@ const Contact = () => {
           title: 'Message Sent!',
           text: 'आपका संदेश हमें मिल गया है। हम जल्द ही आपसे संपर्क करेंगे।',
           icon: 'success',
-          confirmButtonColor: '#16a34a'
+          confirmButtonColor: '#16a34a',
+          timer: 3000,
+          timerProgressBar: true
         });
         setFormData({ name: '', email: '', subject: '', message: '' });
+        
+        // Redirect to Home after 3 seconds
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
       }
     } catch (error) {
       console.error("Contact submit error:", error);

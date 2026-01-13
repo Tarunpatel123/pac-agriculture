@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const Enroll = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const ig = params.get('ig') || params.get('instagram');
@@ -64,10 +66,17 @@ const Enroll = () => {
           text: 'आपका पंजीकरण सफल रहा। हम आपसे जल्द ही संपर्क करेंगे।',
           icon: 'success',
           confirmButtonColor: '#16a34a',
-          confirmButtonText: 'OK'
+          confirmButtonText: 'OK',
+          timer: 3000,
+          timerProgressBar: true
         });
         setStatus('success');
         setFormData({ fullName: '', mobileNumber: '', email: '', currentClass: '', interested_Course: '', instagramId: '' });
+        
+        // Redirect to Home after 3 seconds
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('API Error:', response.status, errorData);

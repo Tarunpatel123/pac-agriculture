@@ -716,6 +716,8 @@ const Admin = () => {
                 </tbody>
               </table>
             </>
+          )}
+
           {activeTab === 'contacts' && (
             <>
               <div className="p-4 bg-yellow-50 border-b border-yellow-100 flex justify-between items-center">
