@@ -113,8 +113,8 @@ const Home = () => {
 
       {/* Video Showcase Section - Expanded Width */}
       <div className="mt-32 bg-[#0a0f0d] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] border-y border-white/5">
-        <div className="max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-2">
-          <div className="p-10 md:p-24 flex flex-col justify-center space-y-8 relative">
+        <div className="max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-12">
+          <div className="lg:col-span-5 p-10 md:p-24 flex flex-col justify-center space-y-8 relative">
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-600/10 to-transparent"></div>
             <span className="text-green-400 font-black uppercase tracking-[0.2em] text-sm relative">Experience PAC Barwaha</span>
             <h2 className="text-5xl md:text-7xl font-black text-white leading-[1.1] relative">
@@ -137,7 +137,7 @@ const Home = () => {
               </div>
             </div>
           </div>
-          <div className="relative aspect-video lg:aspect-auto h-full min-h-[600px]">
+          <div className="lg:col-span-7 relative aspect-video lg:aspect-auto h-full min-h-[600px] lg:min-h-[750px]">
             <video 
               className="absolute inset-0 w-full h-full object-cover"
               autoPlay 
