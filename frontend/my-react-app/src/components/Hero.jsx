@@ -3,13 +3,10 @@ import bookImage from '../assets/images/book.webp';
 
 const Hero = () => {
   return (
-    <div className="relative w-full h-[600px] bg-gray-900">
-      {/* Background Image */}
-      <img 
-        src={bookImage} 
-        alt="Agriculture Field" 
-        className="w-full h-full object-cover opacity-60"
-      />
+    <div className="relative w-full h-[600px] bg-gradient-to-br from-green-950 via-gray-900 to-emerald-950 overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green-500/10 rounded-full blur-[120px] animate-pulse"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse delay-1000"></div>
       
       {/* Content Overlay */}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
