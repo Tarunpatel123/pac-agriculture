@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { showCelebration } from '../utils/confetti';
 
 const Signup = () => {
     const navigate = useNavigate();
@@ -15,7 +16,7 @@ const Signup = () => {
     const [loading, setLoading] = useState(false);
     const [locLoading, setLocLoading] = useState(false);
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -71,12 +72,10 @@ const Signup = () => {
         try {
             const res = await axios.post(`${API_BASE_URL}/api/auth/signup`, formData);
             if (res.status === 201) {
-                Swal.fire({
-                    title: 'Signup Successful!',
-                    text: 'You can now login with your credentials.',
-                    icon: 'success',
-                    confirmButtonColor: '#16a34a'
-                });
+                showCelebration(
+                    'Welcome to the Family! 🎊',
+                    'Your account has been created. You can now login.'
+                );
                 navigate('/login');
             }
         } catch (error) {

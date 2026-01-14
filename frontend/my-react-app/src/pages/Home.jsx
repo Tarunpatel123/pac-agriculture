@@ -1,4 +1,6 @@
+import { useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import Hero from '../components/Hero'
 import Card from '../components/Card'
 import agriVideo from '../assets/videos/WhatsApp Video 2026-01-03 at 11.11.42 PM.mp4'
@@ -6,6 +8,33 @@ import bookImage from '../assets/images/book.webp'
 import logoImage from '../assets/images/logo.jpeg'
 
 const Home = () => {
+  const videoRef = useRef(null);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(err => console.debug("Autoplay prevented:", err));
+        } else {
+          video.pause();
+        }
+      },
+      { 
+        threshold: 0.25, // Play when 25% visible
+        rootMargin: '0px' 
+      }
+    );
+
+    observer.observe(video);
+
+    return () => {
+      if (video) observer.unobserve(video);
+      observer.disconnect();
+    };
+  }, []);
+
   const features = [
     {
       title: "Board Exam Preparation",
@@ -49,41 +78,76 @@ const Home = () => {
     <div>
       <Hero />
       <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
           <span className="text-green-600 font-bold tracking-wide uppercase text-sm">Why Choose PAC Barwaha</span>
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mt-2 mb-4">Shaping Your Future</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             We provide the best environment for students to excel in their school and competitive exams.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card 
+            <motion.div
               key={index}
-              title={feature.title}
-              description={feature.description}
-              icon={feature.icon}
-              link={feature.link}
-            />
+              initial={{ opacity: 0, x: index % 2 === 0 ? -100 : 100 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ 
+                duration: 1.2, 
+                delay: (index % 3) * 0.2,
+                ease: [0.22, 1, 0.36, 1] // Custom cubic-bezier for smooth motion
+              }}
+            >
+              <Card 
+                title={feature.title}
+                description={feature.description}
+                icon={feature.icon}
+                link={feature.link}
+              />
+            </motion.div>
           ))}
         </div>
 
         {/* New Vision Section with Image */}
-        <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="relative group">
+        <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center overflow-hidden">
+          <motion.div 
+            initial={{ opacity: 0, x: -150 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="relative group"
+          >
             <div className="absolute -inset-4 bg-green-500/10 rounded-[2rem] blur-2xl group-hover:bg-green-500/20 transition-all duration-500"></div>
             <img 
               src={bookImage} 
               alt="Advanced Agriculture Learning" 
               className="relative rounded-2xl shadow-2xl z-10 border-4 border-white transform transition-transform duration-500 group-hover:scale-[1.02]"
             />
-            <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-2xl z-20 hidden md:block border-l-8 border-green-600 animate-bounce-slow">
+            <motion.div 
+              initial={{ scale: 0, rotate: -20 }}
+              whileInView={{ scale: 1, rotate: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.8, duration: 0.8, type: 'spring' }}
+              className="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-2xl z-20 hidden md:block border-l-8 border-green-600 animate-bounce-slow"
+            >
               <p className="text-3xl font-black text-green-900 leading-none">15+</p>
               <p className="text-gray-600 font-bold uppercase tracking-tighter text-xs mt-1">Years of Excellence</p>
-            </div>
-          </div>
-          <div className="space-y-8 relative">
+            </motion.div>
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, x: 150 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="space-y-8 relative"
+          >
             <div className="inline-block px-4 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold uppercase tracking-wider">
               Our Vision
             </div>
@@ -100,13 +164,17 @@ const Home = () => {
                 { label: 'Focused Material', icon: '📚' },
                 { label: 'Result Oriented', icon: '🏆' }
               ].map((item, i) => (
-                <div key={i} className="flex items-center space-x-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <motion.div 
+                  key={i}
+                  whileHover={{ scale: 1.05 }}
+                  className="flex items-center space-x-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100"
+                >
                   <span className="text-2xl">{item.icon}</span>
                   <span className="text-gray-800 font-bold text-sm">{item.label}</span>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
 
       </div> {/* End of first container */}
@@ -114,7 +182,13 @@ const Home = () => {
       {/* Video Showcase Section - Expanded Width */}
       <div className="mt-32 bg-[#0a0f0d] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.4)] border-y border-white/5">
         <div className="max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-12">
-          <div className="lg:col-span-5 p-10 md:p-24 flex flex-col justify-center space-y-8 relative">
+          <motion.div 
+            initial={{ opacity: 0, x: -200 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-5 p-10 md:p-24 flex flex-col justify-center space-y-8 relative"
+          >
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-600/10 to-transparent"></div>
             <span className="text-green-400 font-black uppercase tracking-[0.2em] text-sm relative">Experience PAC Barwaha</span>
             <h2 className="text-5xl md:text-7xl font-black text-white leading-[1.1] relative">
@@ -123,24 +197,26 @@ const Home = () => {
             <p className="text-gray-400 text-xl leading-relaxed relative font-medium max-w-xl">
               PAC Barwaha में हम केवल किताबों से नहीं सिखाते, बल्कि आधुनिक तकनीकों और प्रैक्टिकल अनुभवों के माध्यम से छात्रों को तैयार करते हैं। यहाँ शिक्षा केवल सूचना नहीं, बल्कि एक अनुभव है।
             </p>
-            <div className="flex items-center space-x-6 relative">
-              <div className="group cursor-pointer">
-                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center text-white shadow-[0_0_30px_rgba(34,197,94,0.4)] group-hover:scale-110 transition-transform">
-                  <svg className="w-10 h-10 fill-current" viewBox="0 0 20 20">
-                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.333-5.89a1.5 1.5 0 000-2.538L6.3 2.841z" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <p className="text-white font-black text-xl">Virtual Tour</p>
-                <p className="text-green-400/60 font-bold text-base">Explore our campus & labs</p>
-              </div>
+            <div className="flex items-center space-x-4 relative">
+              <motion.div 
+                initial={{ width: 0 }}
+                whileInView={{ width: 48 }}
+                transition={{ duration: 1.5, delay: 1 }}
+                className="h-[2px] bg-green-500"
+              ></motion.div>
+              <p className="text-green-400 font-bold uppercase tracking-widest text-xs">Scroll to explore</p>
             </div>
-          </div>
-          <div className="lg:col-span-7 relative aspect-video lg:aspect-auto h-full min-h-[600px] lg:min-h-[750px]">
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, x: 200 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-7 relative aspect-video lg:aspect-auto h-full min-h-[600px] lg:min-h-[750px] overflow-hidden group/video"
+          >
             <video 
+              ref={videoRef}
               className="absolute inset-0 w-full h-full object-cover"
-              autoPlay 
               muted 
               loop 
               playsInline
@@ -148,61 +224,46 @@ const Home = () => {
             >
               <source src={agriVideo} type="video/mp4" />
             </video>
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0f0d] via-[#0a0f0d]/40 to-transparent"></div>
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0f0d] via-[#0a0f0d]/40 to-transparent pointer-events-none"></div>
+          </motion.div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-16"> {/* Start of second container */}
         {/* Image Gallery Section */}
         <div className="mt-32">
-          <div className="text-center mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
             <span className="text-green-600 font-black uppercase tracking-widest text-sm">Our Gallery</span>
             <h2 className="text-4xl md:text-6xl font-black text-gray-900 mt-2">Campus Life</h2>
-            <div className="w-24 h-2 bg-gradient-to-r from-green-600 to-emerald-600 mx-auto mt-6 rounded-full"></div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <motion.div 
+              initial={{ width: 0 }}
+              whileInView={{ width: 96 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="h-2 bg-gradient-to-r from-green-600 to-emerald-600 mx-auto mt-6 rounded-full"
+            ></motion.div>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {[
               {
                 url: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
                 tag: "Expert Teaching"
               },
               {
-                url: bookImage,
-                tag: "Library"
-              },
-              {
-                url: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                tag: "Study Group"
-              },
-              {
-                url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                tag: "Campus Life"
-              },
-              {
-                url: logoImage,
-                tag: "PAC Barwaha",
-                isCenter: true
-              },
-              {
-                url: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                tag: "Lab Work"
-              },
-              {
-                url: "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                tag: "Agriculture Field"
-              },
-              {
-                url: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                tag: "Practical Learning"
-              },
-              {
-                url: "https://images.unsplash.com/photo-1517245318773-b7b85cf7f3cf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                tag: "Seminar Hall"
+                url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                tag: "Interactive Teaching"
               }
             ].map((item, i) => (
-              <div 
+              <motion.div 
                 key={i} 
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.2 }}
                 className={`group relative overflow-hidden rounded-[2.5rem] shadow-2xl transition-all duration-700 hover:-translate-y-2 ${
                   item.isCenter ? 'h-[300px] md:h-full lg:h-[400px] border-4 border-green-500 bg-white' : 'h-[300px] md:h-[350px] lg:h-[400px]'
                 }`}
@@ -231,12 +292,18 @@ const Home = () => {
                     </span>
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
-        <div className="mt-32 relative rounded-[3rem] p-12 md:p-24 text-center text-white shadow-[0_40px_80px_rgba(0,0,0,0.3)] overflow-hidden min-h-[500px] flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="mt-32 relative rounded-[3rem] p-12 md:p-24 text-center text-white shadow-[0_40px_80px_rgba(0,0,0,0.3)] overflow-hidden min-h-[500px] flex items-center justify-center"
+        >
           <div 
             className="absolute inset-0 bg-cover bg-center scale-110 hover:scale-100 transition-transform duration-[2s]"
             style={{ backgroundImage: `url(${bookImage})` }}
@@ -244,11 +311,31 @@ const Home = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-green-950/95 via-green-900/80 to-emerald-900/90"></div>
 
           <div className="relative z-10 max-w-4xl">
-            <h2 className="text-4xl md:text-7xl font-black mb-8 leading-tight">Ready to Start Your <span className="text-green-400">Journey?</span></h2>
-            <p className="text-xl md:text-2xl text-green-50/80 mb-12 font-medium leading-relaxed">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-4xl md:text-7xl font-black mb-8 leading-tight"
+            >
+              Ready to Start Your <span className="text-green-400">Journey?</span>
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+              className="text-xl md:text-2xl text-green-50/80 mb-12 font-medium leading-relaxed"
+            >
               Join PAC Barwaha today and give your career a new direction with the best coaching in the region.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-6 justify-center"
+            >
               <Link 
                 to="/enroll"
                 className="px-12 py-5 bg-green-500 text-white font-black text-xl rounded-2xl hover:bg-green-400 transition transform hover:scale-105 shadow-[0_15px_30px_rgba(34,197,94,0.4)]"
@@ -261,9 +348,9 @@ const Home = () => {
               >
                 Contact Us
               </Link>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

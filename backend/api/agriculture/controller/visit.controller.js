@@ -93,12 +93,12 @@ const trackVisit = async (req, res) => {
       metadata: JSON.stringify(urlParams || {})
     });
 
-    // Send response back to frontend with distance info
-    res.status(200).json({ 
+    // Send response back to frontend with distance info (will be sent at the end)
+    const responseData = { 
       success: true, 
       distance: distanceInfo,
       location: locationInfo 
-    });
+    };
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -138,7 +138,7 @@ const trackVisit = async (req, res) => {
       else console.log("Visit Alert Sent: " + info.response);
     });
 
-    res.status(200).json({ success: true });
+    res.status(200).json(responseData);
   } catch (error) {
     console.error("Tracking Error:", error);
     res.status(500).json({ success: false });

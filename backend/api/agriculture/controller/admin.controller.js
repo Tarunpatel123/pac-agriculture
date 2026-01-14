@@ -4,18 +4,25 @@ const Share = require("../models/share");
 const Contact = require("../models/contact");
 
 const getAdminStats = async (req, res) => {
+  console.log('Admin Stats request received');
   try {
     const secretKey = req.headers['x-admin-secret'];
+    console.log('Secret key from header:', secretKey ? 'Provided' : 'Missing');
     
     // Simple secret key check (In a real app, use JWT)
     if (secretKey !== process.env.ADMIN_SECRET_KEY) {
+      console.warn('Unauthorized admin access attempt with key:', secretKey);
       return res.status(401).json({ message: "Unauthorized access" });
     }
 
-    const enrollments = await User.find().sort({ createdAt: -1 });
-    const visits = await Visit.find().sort({ createdAt: -1 });
-    const shares = await Share.find().sort({ createdAt: -1 });
-    const contacts = await Contact.find().sort({ createdAt: -1 });
+    console.log('Fetching data from database...');
+    const [enrollments, visits, shares, contacts] = await Promise.all([
+      User.find().sort({ createdAt: -1 }),
+      Visit.find().sort({ createdAt: -1 }),
+      Share.find().sort({ createdAt: -1 }),
+      Contact.find().sort({ createdAt: -1 })
+    ]);
+    console.log('Data fetched successfully');
 
     const stats = {
       totalEnrollments: enrollments.length,
@@ -31,7 +38,7 @@ const getAdminStats = async (req, res) => {
     res.status(200).json(stats);
   } catch (error) {
     console.error("Admin Stats Error:", error);
-    res.status(500).json({ error: "Failed to fetch admin statistics" });
+    res.status(500).json({ error: "Failed to fetch admin statistics", details: error.message });
   }
 };
 

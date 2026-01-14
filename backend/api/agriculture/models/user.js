@@ -22,19 +22,15 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true
+      required: false // Optional for leads
     },
     currentClass: {
       type: String,
       required: false
     },
     location: {
-      type: {
-        lat: Number,
-        lng: Number,
-        address: String
-      },
-      required: true
+      type: mongoose.Schema.Types.Mixed, // Use Mixed for flexible object structure
+      required: false
     },
     role: {
       type: String,
@@ -63,4 +59,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.models.User || mongoose.model("User", userSchema);
+// Clear the model if it already exists to avoid schema caching issues in development
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+module.exports = mongoose.model("User", userSchema);

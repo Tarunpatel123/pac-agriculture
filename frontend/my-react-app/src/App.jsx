@@ -21,9 +21,15 @@ function AppContent() {
   const [user, setUser] = React.useState(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('pac_user');
-    if (userStr) {
-      setUser(JSON.parse(userStr));
+    try {
+      const userStr = localStorage.getItem('pac_user');
+      if (userStr && userStr !== 'undefined') {
+        setUser(JSON.parse(userStr));
+      }
+    } catch (err) {
+      console.error('Error parsing user data:', err);
+      localStorage.removeItem('pac_user');
+      localStorage.removeItem('pac_token');
     }
   }, []);
 
@@ -47,7 +53,7 @@ function AppContent() {
         const params = new URLSearchParams(window.location.search);
         const urlParams = Object.fromEntries(params.entries());
         
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '';
         await fetch(`${API_BASE_URL}/api/track-visit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -108,11 +114,7 @@ function AppContent() {
           } />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/admin-pac-portal" element={
-            <ProtectedRoute adminOnly={true}>
-              <Admin />
-            </ProtectedRoute>
-          } />
+          <Route path="/admin-pac-portal" element={<Admin />} />
           
           {/* Feature Detail Routes */}
           <Route path="/feature/board-exam" element={

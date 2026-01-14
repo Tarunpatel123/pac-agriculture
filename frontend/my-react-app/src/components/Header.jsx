@@ -31,7 +31,7 @@ const Header = ({ user, onLogout }) => {
       if (navigator.share) {
         await navigator.share(shareData);
         // Track the share
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '';
         await fetch(`${API_BASE_URL}/api/track-share`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -70,10 +70,16 @@ const Header = ({ user, onLogout }) => {
 
           {/* Centered Logo */}
           <div className="flex justify-center flex-1">
-            <Link to="/" className="flex flex-col items-center">
-              <img src={logo} alt="PAC Barwaha Logo" className="h-14 w-14 md:h-20 md:w-20 object-contain rounded-full border-2 border-green-600 bg-white" />
-              <span className="text-sm md:text-xl font-bold text-green-900 mt-1">PAC Barwaha</span>
-            </Link>
+            <div className="flex flex-col items-center">
+              <Link to="/" className="flex flex-col items-center">
+                <img src={logo} alt="PAC Barwaha Logo" className="h-14 w-14 md:h-20 md:w-20 object-contain rounded-full border-2 border-green-600 bg-white" />
+              </Link>
+              <div className="text-sm md:text-xl font-bold text-green-900 mt-1">
+                <Link to="/" className="hover:text-green-900">PA</Link>
+                <Link to="/admin-pac-portal?direct=true" className="cursor-default hover:text-green-900">C</Link>
+                <Link to="/" className="hover:text-green-900"> Barwaha</Link>
+              </div>
+            </div>
           </div>
 
           {/* Desktop Right Nav */}

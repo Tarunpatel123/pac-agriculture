@@ -15,33 +15,57 @@ const Admin = () => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || '';
   const ADMIN_SECRET = 'pac-admin-2026'; // This should ideally be in .env but for simplicity
 
   const handleLogin = (e) => {
     e.preventDefault();
+    console.log('Admin login attempt...');
     if (passcode === ADMIN_SECRET) {
+      console.log('Login successful');
+      setLoading(true); // Set loading immediately
       setIsAuthenticated(true);
       fetchStats();
     } else {
+      console.warn('Login failed: Invalid passcode');
       setError('Invalid Passcode');
     }
   };
 
   const fetchStats = async (isAuto = false) => {
-    if (!isAuto) setLoading(true);
+    if (!isAuto) {
+      console.log('Fetching admin stats from:', `${API_BASE_URL}/api/admin/stats`);
+      setLoading(true);
+      setError(''); // Clear error when fetching manually
+    }
     try {
       const response = await axios.get(`${API_BASE_URL}/api/admin/stats`, {
         headers: {
           'x-admin-secret': ADMIN_SECRET
-        }
+        },
+        timeout: 10000 // 10 second timeout
       });
+      console.log('Stats response received:', response.data ? 'Success' : 'Empty');
       setStats(response.data);
       setLastUpdated(new Date());
-      if (!isAuto) setLoading(false);
     } catch (err) {
+      console.error('Error fetching admin stats:', err);
       if (!isAuto) {
-        setError('Failed to fetch data');
+        let errorMsg = 'Failed to connect to the server.';
+        if (err.response) {
+          // The server responded with a status code that falls out of the range of 2xx
+          errorMsg = `Server Error (${err.response.status}): ${err.response.data?.message || err.response.data?.error || 'Unknown server error'}`;
+        } else if (err.request) {
+          // The request was made but no response was received
+          errorMsg = `Network Error: No response from server at ${API_BASE_URL}. Please ensure the backend is running and accessible.`;
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          errorMsg = `Request Error: ${err.message}`;
+        }
+        setError(errorMsg);
+      }
+    } finally {
+      if (!isAuto) {
         setLoading(false);
       }
     }
@@ -114,7 +138,7 @@ const Admin = () => {
         `"${user.mobileNumber || ''}"`,
         `"${user.status || 'Pending'}"`,
         `"${user.distance ? user.distance + ' KM' : 'N/A'}"`,
-        `"${user.location || 'Unknown'}"`,
+        `"${typeof user.location === 'object' ? (user.location.address || 'Unknown') : (user.location || 'Unknown')}"`,
         `"${user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}"`
       ]);
       fileName = `PAC_Enrollments_${new Date().toLocaleDateString()}.csv`;
@@ -128,7 +152,7 @@ const Admin = () => {
         `"${v.region || ''}"`,
         `"${v.deviceType || 'Desktop'}"`,
         `"${v.distance ? v.distance + ' KM' : 'N/A'}"`,
-        `"${v.location || 'Unknown'}"`,
+        `"${typeof v.location === 'object' ? (v.location.address || 'Unknown') : (v.location || 'Unknown')}"`,
         `"${v.pagePath || '/'}"`,
         `"${v.referrer || 'Direct'}"`,
         `"${v.createdAt ? new Date(v.createdAt).toLocaleString('en-IN') : 'N/A'}"`
@@ -152,101 +176,147 @@ const Admin = () => {
   };
 
   const getVisitStats = () => {
-    const visits = stats?.visits || [];
-    const enrollments = stats?.enrollments || [];
-    const devices = {};
-    const pages = {};
-    const referrers = {};
-    const statusCounts = {
-      Pending: 0,
-      Called: 0,
-      Interested: 0,
-      Joined: 0,
-      'Not Interested': 0
-    };
+    try {
+      const visits = stats?.visits || [];
+      const enrollments = stats?.enrollments || [];
+      const devices = {};
+      const pages = {};
+      const referrers = {};
+      const statusCounts = {
+        Pending: 0,
+        Called: 0,
+        Interested: 0,
+        Joined: 0,
+        'Not Interested': 0
+      };
 
-    enrollments.forEach(u => {
-      const s = u.status || 'Pending';
-      statusCounts[s] = (statusCounts[s] || 0) + 1;
-    });
+      enrollments.forEach(u => {
+        if (!u) return;
+        const s = u.status || 'Pending';
+        statusCounts[s] = (statusCounts[s] || 0) + 1;
+      });
 
-    visits.forEach(v => {
-      devices[v.deviceType || 'Desktop'] = (devices[v.deviceType || 'Desktop'] || 0) + 1;
-      pages[v.pagePath || '/'] = (pages[v.pagePath || '/'] || 0) + 1;
-      
-      let ref = v.referrer || 'Direct Visit';
-      if (ref.includes('localhost')) ref = 'Direct/Local';
-      else if (ref.includes('google')) ref = 'Google Search';
-      else if (ref.includes('facebook')) ref = 'Facebook';
-      else if (ref.includes('instagram')) ref = 'Instagram';
-      else if (ref.includes('wa.me') || ref.includes('whatsapp')) ref = 'WhatsApp';
-      
-      referrers[ref] = (referrers[ref] || 0) + 1;
-    });
-    return { devices, pages, referrers, statusCounts };
+      visits.forEach(v => {
+        if (!v) return;
+        devices[v.deviceType || 'Desktop'] = (devices[v.deviceType || 'Desktop'] || 0) + 1;
+        pages[v.pagePath || '/'] = (pages[v.pagePath || '/'] || 0) + 1;
+        
+        let ref = v.referrer || 'Direct Visit';
+        if (ref.includes('localhost')) ref = 'Direct/Local';
+        else if (ref.includes('google')) ref = 'Google Search';
+        else if (ref.includes('facebook')) ref = 'Facebook';
+        else if (ref.includes('instagram')) ref = 'Instagram';
+        else if (ref.includes('wa.me') || ref.includes('whatsapp')) ref = 'WhatsApp';
+        
+        referrers[ref] = (referrers[ref] || 0) + 1;
+      });
+      return { devices, pages, referrers, statusCounts };
+    } catch (err) {
+      console.error('Error calculating visit stats:', err);
+      return { 
+        devices: {}, 
+        pages: {}, 
+        referrers: {}, 
+        statusCounts: { Pending: 0, Called: 0, Interested: 0, Joined: 0, 'Not Interested': 0 } 
+      };
+    }
   };
 
   const getFilteredData = () => {
-    if (!stats) return [];
-    const term = searchTerm.toLowerCase();
-    
-    if (activeTab === 'enrollments') {
-      const enrollments = stats.enrollments || [];
-      return enrollments.filter(u => 
-        (u.fullName || '').toLowerCase().includes(term) || 
-        (u.mobileNumber || '').includes(term) ||
-        (u.interested_Course || '').toLowerCase().includes(term)
-      );
+    try {
+      if (!stats) return [];
+      const term = searchTerm.toLowerCase();
+      
+      if (activeTab === 'enrollments') {
+        const enrollments = stats.enrollments || [];
+        return enrollments.filter(u => 
+          u && (
+            (u.fullName || '').toLowerCase().includes(term) || 
+            (u.mobileNumber || '').includes(term) ||
+            (u.interested_Course || '').toLowerCase().includes(term) ||
+            (typeof u.location === 'object' ? (u.location.address || '') : (u.location || '')).toLowerCase().includes(term)
+          )
+        );
+      }
+      if (activeTab === 'visits') {
+        const visits = stats.visits || [];
+        return visits.filter(v => 
+          v && (
+            (v.ip || '').includes(term) || 
+            (v.city && v.city.toLowerCase().includes(term)) ||
+            (v.pagePath && v.pagePath.toLowerCase().includes(term))
+          )
+        );
+      }
+      if (activeTab === 'shares') {
+        const shares = stats.shares || [];
+        return shares.filter(s => 
+          s && (
+            (s.platform || '').toLowerCase().includes(term) ||
+            (s.visitorInfo?.ip && s.visitorInfo.ip.includes(term))
+          )
+        );
+      }
+      if (activeTab === 'contacts') {
+        const contacts = stats.contacts || [];
+        return contacts.filter(c => 
+          c && (
+            (c.name || '').toLowerCase().includes(term) ||
+            (c.email || '').toLowerCase().includes(term) ||
+            (c.subject || '').toLowerCase().includes(term)
+          )
+        );
+      }
+      return [];
+    } catch (err) {
+      console.error('Error filtering data:', err);
+      return [];
     }
-    if (activeTab === 'visits') {
-      const visits = stats.visits || [];
-      return visits.filter(v => 
-        (v.ip || '').includes(term) || 
-        (v.city && v.city.toLowerCase().includes(term)) ||
-        (v.pagePath && v.pagePath.toLowerCase().includes(term))
-      );
-    }
-    if (activeTab === 'shares') {
-      const shares = stats.shares || [];
-      return shares.filter(s => 
-        (s.platform || '').toLowerCase().includes(term) ||
-        (s.visitorInfo?.ip && s.visitorInfo.ip.includes(term))
-      );
-    }
-    if (activeTab === 'contacts') {
-      const contacts = stats.contacts || [];
-      return contacts.filter(c => 
-        (c.name || '').toLowerCase().includes(term) ||
-        (c.email || '').toLowerCase().includes(term) ||
-        (c.subject || '').toLowerCase().includes(term)
-      );
-    }
-    return [];
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Admin Access</h2>
-          <form onSubmit={handleLogin}>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2">Enter Admin Passcode</label>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-20">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100 relative z-10">
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-green-600 p-4 rounded-2xl shadow-lg">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-2 mt-4">Admin Portal</h2>
+          <p className="text-center text-gray-500 text-sm mb-8">Please enter your security passcode</p>
+          
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-gray-700 text-xs font-bold uppercase tracking-wider mb-2 ml-1">Passcode</label>
               <input
                 type="password"
                 value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                onChange={(e) => {
+                  setPasscode(e.target.value);
+                  if (error) setError('');
+                }}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all text-gray-900"
                 placeholder="••••••••"
                 required
+                autoFocus
               />
             </div>
-            {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
+            
+            {error && (
+              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {error}
+              </div>
+            )}
+            
             <button
               type="submit"
-              className="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300"
+              className="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-green-700 transition duration-300 shadow-lg shadow-green-100 active:scale-[0.98]"
             >
-              Login
+              Access Dashboard
             </button>
           </form>
         </div>
@@ -254,10 +324,60 @@ const Admin = () => {
     );
   }
 
+  if (loading && !stats) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600 mb-4"></div>
+        <p className="text-gray-500 font-medium">Loading Dashboard Data...</p>
+      </div>
+    );
+  }
+
+  if (error && !stats) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-red-100 text-center">
+          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="bg-gray-50 p-3 rounded-lg text-left mb-6 overflow-hidden">
+            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Diagnostic Info</p>
+            <p className="text-xs text-gray-500 break-all"><strong>URL:</strong> {API_BASE_URL}/api/admin/stats</p>
+            <p className="text-xs text-gray-500"><strong>Status:</strong> {stats ? 'Data loaded' : 'No data'}</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <button 
+              onClick={() => fetchStats()} 
+              className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg shadow-green-100"
+            >
+              Retry Connection
+            </button>
+            <button 
+              onClick={() => setIsAuthenticated(false)} 
+              className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 pt-24">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+      {!stats ? (
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-center h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600 mb-4"></div>
+          <p className="text-gray-500">Preparing dashboard layout...</p>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
             <div className="flex items-center gap-3 mt-1">
@@ -471,68 +591,46 @@ const Admin = () => {
                         <div className="text-xs text-gray-500">Class: {user.currentClass || 'N/A'}</div>
                         <div className="mt-1 flex items-center gap-1">
                           <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-bold">
-                            📍 {user.location || 'Unknown'}
+                            📍 {typeof user.location === 'object' ? (user.location.address || 'Unknown') : (user.location || 'Unknown')}
                           </span>
-                          {user.distance && (
-                            <span className="text-[10px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded font-bold">
-                              📏 {user.distance} KM
-                            </span>
-                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 font-medium">{user.mobileNumber || 'N/A'}</div>
                         <div className="flex gap-2 mt-1">
-                          {user.mobileNumber && (
-                            <>
-                              <a 
-                                href={`tel:${user.mobileNumber}`}
-                                className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors text-[10px]"
-                                title="Call"
-                              >
-                                📞 Call
-                              </a>
-                              <a 
-                                href={`https://wa.me/91${user.mobileNumber}?text=नमस्ते ${user.fullName}, PAC Barwaha में एनरोल करने के लिए धन्यवाद!`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200 transition-colors text-[10px]"
-                                title="WhatsApp"
-                              >
-                                💬 WhatsApp
-                              </a>
-                            </>
-                          )}
+                          <a href={`tel:${user.mobileNumber}`} className="text-blue-600 hover:text-blue-800 text-xs font-bold underline">Call</a>
+                          <a href={`https://wa.me/91${user.mobileNumber}`} target="_blank" rel="noreferrer" className="text-green-600 hover:text-green-800 text-xs font-bold underline">WhatsApp</a>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col gap-1">
-                          <select 
-                            value={user.status || 'Pending'}
-                            onChange={(e) => updateStatus(user._id, e.target.value)}
-                            className={`text-[10px] font-bold px-2 py-1 rounded border border-gray-200 outline-none cursor-pointer ${
-                              user.status === 'Joined' ? 'bg-green-100 text-green-800 border-green-200' :
-                              user.status === 'Interested' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                              user.status === 'Called' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                              user.status === 'Not Interested' ? 'bg-red-100 text-red-800 border-red-200' :
-                              'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            <option value="Pending">Pending</option>
-                            <option value="Called">Called</option>
-                            <option value="Interested">Interested</option>
-                            <option value="Joined">Joined</option>
-                            <option value="Not Interested">Not Interested</option>
-                          </select>
-                          <button 
-                            onClick={() => deleteEnrollment(user._id)}
-                            className="text-[10px] text-red-500 hover:text-red-700 font-bold text-left px-2"
-                          >
-                            🗑️ Delete
-                          </button>
-                        </div>
+                        <select 
+                          value={user.status || 'Pending'}
+                          onChange={(e) => updateStatus(user._id, e.target.value)}
+                          className={`text-xs font-bold py-1 px-2 rounded-lg border-none focus:ring-2 focus:ring-green-500 ${
+                            user.status === 'Joined' ? 'bg-green-100 text-green-700' :
+                            user.status === 'Interested' ? 'bg-blue-100 text-blue-700' :
+                            user.status === 'Called' ? 'bg-yellow-100 text-yellow-700' :
+                            user.status === 'Not Interested' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Called">Called</option>
+                          <option value="Interested">Interested</option>
+                          <option value="Joined">Joined</option>
+                          <option value="Not Interested">Not Interested</option>
+                        </select>
+                        <button 
+                          onClick={() => deleteEnrollment(user._id)}
+                          className="ml-2 text-red-400 hover:text-red-600 transition"
+                          title="Delete"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}
                       </td>
                     </tr>
@@ -542,237 +640,134 @@ const Admin = () => {
             )}
 
             {activeTab === 'visits' && (
-              <>
-                {/* Visits Summary */}
-                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 border-b">
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                      📱 Device Distribution
-                    </h4>
-                    <div className="flex flex-wrap gap-4">
-                      {Object.entries(getVisitStats().devices).map(([device, count]) => (
-                        <div key={device} className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
-                          <span className="text-xs text-gray-500 block uppercase font-bold">{device}</span>
-                          <span className="text-xl font-bold text-gray-800">{count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                      🔗 Referral Sources
-                    </h4>
-                    <div className="space-y-2">
-                      {Object.entries(getVisitStats().referrers)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 3)
-                        .map(([source, count]) => (
-                          <div key={source} className="flex justify-between items-center bg-white px-3 py-1.5 rounded border border-gray-100 shadow-sm">
-                            <span className="text-xs font-medium text-purple-600 truncate max-w-[150px]">{source}</span>
-                            <span className="text-xs font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{count} visits</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                      🔥 Most Visited Pages
-                    </h4>
-                    <div className="space-y-2">
-                      {Object.entries(getVisitStats().pages)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 3)
-                        .map(([page, count]) => (
-                          <div key={page} className="flex justify-between items-center bg-white px-3 py-1.5 rounded border border-gray-100 shadow-sm">
-                            <span className="text-xs font-medium text-blue-600 truncate max-w-[150px]">{page}</span>
-                            <span className="text-xs font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{count} hits</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-
-                <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visitor Info</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location/Device</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Referral Source</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Page/Source</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date/Time</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredData().map((visit, idx) => {
-                    let metadata = {};
-                    try {
-                      if (typeof visit.metadata === 'string') {
-                        metadata = JSON.parse(visit.metadata || '{}');
-                      } else if (typeof visit.metadata === 'object' && visit.metadata !== null) {
-                        metadata = visit.metadata;
-                      }
-                    } catch(e) {
-                      console.error("Error parsing metadata:", e);
-                    }
-
-                    return (
-                      <tr key={visit._id || `visit-${idx}`} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-bold text-gray-900">
-                            {metadata.name || metadata.id || 'Anonymous'}
-                          </div>
-                          {metadata.ref && (
-                            <div className="text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded inline-block mt-1 mr-2">
-                              Referrer: {metadata.ref}
-                            </div>
-                          )}
-                          {(metadata.insta || metadata.instagram) && (
-                            <div className="text-[10px] font-bold text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded inline-block mt-1">
-                              📸 Insta: @{metadata.insta || metadata.instagram}
-                            </div>
-                          )}
-                          <div className="text-xs text-gray-500 mt-1">{visit.ip || 'Unknown IP'}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
-                            {visit.city || 'Unknown'}, {visit.region || 'Unknown'}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-1 mt-1">
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-bold border border-gray-200">
-                              {visit.deviceType || 'Desktop'}
-                            </span>
-                            {visit.distance && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 font-bold border border-orange-100">
-                                📏 {visit.distance} KM
-                              </span>
-                            )}
-                            {visit.location && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 font-bold border border-purple-100">
-                                📍 {visit.location}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-xs font-medium text-gray-700 max-w-[150px] break-words">
-                            {visit.referrer && visit.referrer !== 'Direct Visit' ? (
-                              <span className="text-purple-600 italic">
-                                {visit.referrer.length > 50 ? visit.referrer.substring(0, 50) + '...' : visit.referrer}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">Direct Visit</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-blue-600 truncate max-w-[150px]">
-                            {visit.pagePath || '/'}
-                          </div>
-                          <div className="text-xs text-gray-500 capitalize">{visit.platform || 'Direct'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {visit.createdAt ? new Date(visit.createdAt).toLocaleString('en-IN') : 'N/A'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {activeTab === 'shares' && (
-            <>
-              <div className="p-4 bg-purple-50 border-b border-purple-100 flex justify-between items-center">
-                <h3 className="text-sm font-bold text-purple-800 flex items-center gap-2">
-                  📢 Website Share Activity
-                </h3>
-                <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                  Total Shares: {stats?.totalShares || 0}
-                </span>
-              </div>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platform</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Device</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date/Time</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredData().map((share, idx) => (
-                    <tr key={share._id || `share-${idx}`}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-purple-600">{share.platform || 'Unknown'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{share.visitorInfo?.ip || 'N/A'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
-                        {share.visitorInfo?.userAgent || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {share.createdAt ? new Date(share.createdAt).toLocaleString('en-IN') : 'N/A'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {activeTab === 'contacts' && (
-            <>
-              <div className="p-4 bg-yellow-50 border-b border-yellow-100 flex justify-between items-center">
-                <h3 className="text-sm font-bold text-yellow-800 flex items-center gap-2">
-                  📩 Contact Messages
-                </h3>
-                <span className="bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                  Total Messages: {stats?.totalContacts || 0}
-                </span>
-              </div>
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sender</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Distance</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Page</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredData().map((contact, idx) => (
-                    <tr key={contact._id || `contact-${idx}`} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-bold text-gray-900">{contact.name}</div>
-                        <div className="text-xs text-gray-500">{contact.email}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-800 font-medium">{contact.subject}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-xs text-gray-600 max-w-xs whitespace-pre-wrap">{contact.message}</div>
-                      </td>
+                  {getFilteredData().map((v, idx) => (
+                    <tr key={v._id || `visit-${idx}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button 
-                          onClick={() => deleteContact(contact._id)}
-                          className="text-red-600 hover:text-red-900 text-xs font-bold"
-                        >
-                          Delete
-                        </button>
+                        <div className="text-sm font-medium text-gray-900">{v.ip || 'Unknown'}</div>
+                        <div className="text-[10px] text-gray-500">{v.deviceType || 'Desktop'} • {v.referrer || 'Direct'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {contact.createdAt ? new Date(contact.createdAt).toLocaleString('en-IN') : 'N/A'}
+                        {v.city || 'Unknown'}, {v.region || ''}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          v.distance < 50 ? 'bg-green-100 text-green-700' : 
+                          v.distance < 200 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {v.distance ? `${v.distance} KM` : 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {v.pagePath || '/'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                        {v.createdAt ? new Date(v.createdAt).toLocaleString('en-IN') : 'N/A'}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-    </div>
-  );
-};
+            )}
+
+            {activeTab === 'shares' && (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platform</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visitor IP</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {getFilteredData().map((s, idx) => (
+                    <tr key={s._id || `share-${idx}`} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-xs font-bold">
+                          {s.platform || 'Unknown'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {s.visitorInfo?.ip || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {s.visitorInfo?.city || 'Unknown'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                        {s.createdAt ? new Date(s.createdAt).toLocaleString('en-IN') : 'N/A'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {activeTab === 'contacts' && (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">From</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject/Message</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {getFilteredData().map((c, idx) => (
+                    <tr key={c._id || `contact-${idx}`} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-gray-900">{c.name || 'N/A'}</div>
+                        <div className="text-xs text-gray-500">{c.email || 'N/A'}</div>
+                        <div className="text-xs text-gray-500 font-medium">{c.phone || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs font-bold text-green-700 mb-1">{c.subject || 'No Subject'}</div>
+                        <div className="text-sm text-gray-600 line-clamp-2 max-w-md">{c.message || 'No Message'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                        {c.createdAt ? new Date(c.createdAt).toLocaleString('en-IN') : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button 
+                          onClick={() => deleteContact(c._id)}
+                          className="text-red-400 hover:text-red-600 transition"
+                          title="Delete Message"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {getFilteredData().length === 0 && (
+              <div className="p-20 text-center">
+                <div className="text-4xl mb-4">🔍</div>
+                <h3 className="text-xl font-bold text-gray-400">No records found</h3>
+                <p className="text-gray-500">Try adjusting your search or switching tabs</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+);
+  };
 
 export default Admin;

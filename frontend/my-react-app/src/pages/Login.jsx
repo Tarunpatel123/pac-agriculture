@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { showCelebration } from '../utils/confetti';
 
 const Login = ({ onLogin }) => {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ const Login = ({ onLogin }) => {
 
     const from = location.state?.from?.pathname || "/";
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,13 +32,10 @@ const Login = ({ onLogin }) => {
                 
                 onLogin(res.data.user);
                 
-                Swal.fire({
-                    title: 'Welcome!',
-                    text: `Hello ${res.data.user.fullName}`,
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                showCelebration(
+                    `Welcome Back, ${res.data.user.fullName.split(' ')[0]}! ✨`,
+                    'Glad to see you again. Ready for some learning?'
+                );
 
                 if (res.data.user.role === 'admin') {
                     navigate(from === '/' ? '/admin-pac-portal' : from, { replace: true });

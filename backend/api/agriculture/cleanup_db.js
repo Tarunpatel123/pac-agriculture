@@ -8,6 +8,7 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 const User = require("./models/user");
 const Visit = require("./models/visit");
 const Share = require("./models/share");
+const Contact = require("./models/contact");
 
 const cleanup = async () => {
   try {
@@ -25,6 +26,9 @@ const cleanup = async () => {
 
     const shareResult = await Share.deleteMany({});
     console.log(`Deleted ${shareResult.deletedCount} shares.`);
+
+    const contactResult = await Contact.deleteMany({});
+    console.log(`Deleted ${contactResult.deletedCount} contacts.`);
 
     console.log("\nDatabase is now CLEAN! ✨");
     process.exit(0);

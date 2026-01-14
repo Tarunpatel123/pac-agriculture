@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Swal from 'sweetalert2';
+import { showCelebration } from '../utils/confetti';
 
 const Enroll = () => {
   const navigate = useNavigate();
@@ -24,7 +26,7 @@ const Enroll = () => {
   useEffect(() => {
     const fetchDistance = async () => {
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '';
         // We use the visit tracking logic to get distance
         const res = await fetch(`${API_BASE_URL}/api/track-visit`, {
            method: 'POST',
@@ -61,15 +63,10 @@ const Enroll = () => {
       });
 
       if (response.ok) {
-        Swal.fire({
-          title: 'Success!',
-          text: 'आपका पंजीकरण सफल रहा। हम आपसे जल्द ही संपर्क करेंगे।',
-          icon: 'success',
-          confirmButtonColor: '#16a34a',
-          confirmButtonText: 'OK',
-          timer: 3000,
-          timerProgressBar: true
-        });
+        showCelebration(
+          'Enrollment Successful! 🎓',
+          'आपका पंजीकरण सफल रहा। PAC Barwaha में आपका स्वागत है!'
+        );
         setStatus('success');
         setFormData({ fullName: '', mobileNumber: '', email: '', currentClass: '', interested_Course: '', instagramId: '' });
         
@@ -115,26 +112,55 @@ const Enroll = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden md:max-w-2xl">
+      <motion.div 
+        initial={{ opacity: 0, x: -100 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+        className="max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden md:max-w-2xl"
+      >
         <div className="bg-green-600 py-6 px-8 relative">
-          <h2 className="text-3xl font-bold text-white text-center">Enroll Now</h2>
-          <p className="text-green-100 text-center mt-2">Join PAC Barwaha for a bright future in Agriculture & Science</p>
+          <motion.h2 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+            className="text-3xl font-bold text-white text-center"
+          >
+            Enroll Now
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            className="text-green-100 text-center mt-2"
+          >
+            Join PAC Barwaha for a bright future in Agriculture & Science
+          </motion.p>
           
           {distance && (
-            <div className="absolute top-2 right-2 bg-white/20 backdrop-blur-sm text-white text-[10px] px-2 py-1 rounded-full border border-white/30 flex items-center gap-1">
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 1, type: 'spring' }}
+              className="absolute top-2 right-2 bg-white/20 backdrop-blur-sm text-white text-[10px] px-2 py-1 rounded-full border border-white/30 flex items-center gap-1"
+            >
               📍 You are ~{distance} away from us
-            </div>
+            </motion.div>
           )}
         </div>
         
         <div className="p-8">
           {status === 'success' ? (
             <div className="text-center py-12">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', damping: 10 }}
+                className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+              >
                 <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-              </div>
+              </motion.div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h3>
               <p className="text-gray-600">Thank you for enrolling. We will contact you shortly.</p>
               <button 
@@ -146,7 +172,11 @@ const Enroll = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6, duration: 1 }}
+              >
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                 <input
                   type="text"
@@ -157,10 +187,14 @@ const Enroll = () => {
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                   placeholder="Enter your full name"
                 />
-              </div>
+              </motion.div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <motion.div
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8, duration: 1 }}
+                >
                   <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
                   <input
                     type="tel"
@@ -171,8 +205,12 @@ const Enroll = () => {
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                     placeholder="10 digit mobile number"
                   />
-                </div>
-                <div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8, duration: 1 }}
+                >
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                   <input
                     type="email"
@@ -183,11 +221,15 @@ const Enroll = () => {
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                     placeholder="example@gmail.com"
                   />
-                </div>
+                </motion.div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <motion.div
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1, duration: 1 }}
+                >
                   <label className="block text-sm font-medium text-gray-700 mb-1">Current Class</label>
                   <select
                     name="currentClass"
@@ -201,8 +243,12 @@ const Enroll = () => {
                     <option value="12th">12th Standard</option>
                     <option value="Other">Other</option>
                   </select>
-                </div>
-                <div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1, duration: 1 }}
+                >
                   <label className="block text-sm font-medium text-gray-700 mb-1">Interested Course</label>
                   <select
                     name="interested_Course"
@@ -215,10 +261,14 @@ const Enroll = () => {
                     <option value="Science">Science (PCB/PCM)</option>
                     <option value="Agriculture">Agriculture</option>
                   </select>
-                </div>
+                </motion.div>
               </div>
 
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2, duration: 1 }}
+              >
                 <label className="block text-sm font-medium text-gray-700 mb-1">Instagram ID (Optional)</label>
                 <div className="relative">
                   <input
@@ -238,7 +288,7 @@ const Enroll = () => {
                     Verify with Insta
                   </button>
                 </div>
-              </div>
+              </motion.div>
 
               {status === 'error' && (
                 <p className="text-red-500 text-sm text-center">Something went wrong. Please try again.</p>
@@ -256,7 +306,7 @@ const Enroll = () => {
             </form>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

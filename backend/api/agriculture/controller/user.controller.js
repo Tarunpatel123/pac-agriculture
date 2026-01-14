@@ -41,7 +41,7 @@ const UserController = {
     if (ip.includes('::ffff:')) ip = ip.split(':').pop();
 
     let distance = null;
-    let location = 'Unknown';
+    let location = null; // Changed from 'Unknown' string to null object
 
     // Fetch Geo Location for distance
     try {
@@ -51,7 +51,11 @@ const UserController = {
       const geoResponse = await axios.get(`http://ip-api.com/json/${fetchIp}`);
       if (geoResponse.data.status === 'success') {
         const { city, regionName, lat, lon } = geoResponse.data;
-        location = `${city}, ${regionName}`;
+        location = {
+          lat,
+          lng: lon,
+          address: `${city}, ${regionName}`
+        };
         distance = calculateDistance(BARWAHA_LAT, BARWAHA_LON, lat, lon);
       }
     } catch (err) {
@@ -98,7 +102,7 @@ const UserController = {
               <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Class:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${currentClass}</td></tr>
               <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Course:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${interested_Course}</td></tr>
               <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Instagram ID:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${instagramId || 'Not provided'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;"><strong>Location:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;">${location}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;"><strong>Location:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;">${location ? location.address : 'Unknown'}</td></tr>
               <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;"><strong>Distance:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;">${distance ? distance + ' KM' : 'N/A'}</td></tr>
               <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Referrer:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${referrer}</td></tr>
             </table>
