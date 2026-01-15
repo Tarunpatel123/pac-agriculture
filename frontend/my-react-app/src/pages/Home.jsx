@@ -22,21 +22,26 @@ const Home = () => {
           await video.play();
         }
       } catch (err) {
-        console.warn("Video autoplay failed:", err);
+        // Only log if it's not a standard abort error
+        if (err.name !== 'AbortError') {
+          console.warn("Video autoplay failed:", err);
+        }
       }
     };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        // If even a small part is visible, try to play
         if (entry.isIntersecting) {
           handlePlay();
         } else {
+          // Only pause if it's completely out of view to prevent stop/start stutter
           video.pause();
         }
       },
       { 
-        threshold: 0.1, // Reduced threshold for better mobile detection
-        rootMargin: '50px' // Start loading slightly before it comes into view
+        threshold: 0, // Trigger as soon as one pixel enters
+        rootMargin: '200px' // Keep playing/loading well before and after it's in view
       }
     );
 
@@ -246,16 +251,18 @@ const Home = () => {
             className="lg:col-span-7 relative group mt-8 lg:mt-0 px-6 md:px-0"
           >
             <div className="absolute -inset-4 md:-inset-10 bg-green-500/10 rounded-[4rem] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-            <div className="relative h-full min-h-[400px] md:min-h-[700px] overflow-hidden rounded-[2rem] md:rounded-l-[4rem] md:rounded-r-none border-y md:border-y-0 md:border-l border-white/10 bg-gray-900">
+            <div className="relative h-full min-h-[400px] md:min-h-[700px] overflow-hidden rounded-[2rem] md:rounded-l-[4rem] md:rounded-r-none border-y md:border-y-0 md:border-l border-white/10 bg-gray-950">
               <video 
                 ref={videoRef}
                 src={agriVideo}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover opacity-90"
                 muted
                 loop
                 playsInline
                 autoPlay
                 preload="auto"
+                controlsList="nodownload nofullscreen noplaybackrate"
+                disablePictureInPicture
                 onError={(e) => console.error("Video loading error:", e)}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 md:bg-gradient-to-r md:from-black/60 md:to-transparent"></div>
