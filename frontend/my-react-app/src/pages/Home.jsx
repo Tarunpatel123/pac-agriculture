@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Hero from '../components/Hero'
 import Card from '../components/Card'
-import agriVideo from '../assets/videos/WhatsApp Video 2026-01-03 at 11.11.42 PM.mp4'
+import agriVideo from '../assets/videos/hero-video.mp4'
 import bookImage from '../assets/images/book.webp'
 import logoImage from '../assets/images/logo.jpeg'
 
@@ -13,17 +13,30 @@ const Home = () => {
     const video = videoRef.current;
     if (!video) return;
 
+    // Ensure video is muted for autoplay
+    video.muted = true;
+
+    const handlePlay = async () => {
+      try {
+        if (video.paused) {
+          await video.play();
+        }
+      } catch (err) {
+        console.warn("Video autoplay failed:", err);
+      }
+    };
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          video.play().catch(err => console.debug("Autoplay prevented:", err));
+          handlePlay();
         } else {
           video.pause();
         }
       },
       { 
-        threshold: 0.25, // Play when 25% visible
-        rootMargin: '0px' 
+        threshold: 0.1, // Reduced threshold for better mobile detection
+        rootMargin: '50px' // Start loading slightly before it comes into view
       }
     );
 
@@ -233,7 +246,7 @@ const Home = () => {
             className="lg:col-span-7 relative group mt-8 lg:mt-0 px-6 md:px-0"
           >
             <div className="absolute -inset-4 md:-inset-10 bg-green-500/10 rounded-[4rem] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-            <div className="relative h-full min-h-[400px] md:min-h-[700px] overflow-hidden rounded-[2rem] md:rounded-l-[4rem] md:rounded-r-none border-y md:border-y-0 md:border-l border-white/10">
+            <div className="relative h-full min-h-[400px] md:min-h-[700px] overflow-hidden rounded-[2rem] md:rounded-l-[4rem] md:rounded-r-none border-y md:border-y-0 md:border-l border-white/10 bg-gray-900">
               <video 
                 ref={videoRef}
                 src={agriVideo}
@@ -241,6 +254,9 @@ const Home = () => {
                 muted
                 loop
                 playsInline
+                autoPlay
+                preload="auto"
+                onError={(e) => console.error("Video loading error:", e)}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 md:bg-gradient-to-r md:from-black/60 md:to-transparent"></div>
               

@@ -175,34 +175,48 @@ const Header = ({ user, onLogout }) => {
       {/* Mobile Navigation Menu */}
       <AnimatePresence>
         {isMenuOpen && (
-          <>
+          <div className="fixed inset-0 z-[200] md:hidden">
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[101] md:hidden"
+              className="absolute inset-0 bg-green-900/20 backdrop-blur-sm"
             />
+            
+            {/* Sidebar */}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-[85%] max-w-xs bg-white z-[102] shadow-2xl md:hidden flex flex-col"
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col overflow-hidden"
             >
-              <div className="p-5 flex justify-between items-center border-b border-gray-50">
-                <div className="flex items-center space-x-2">
-                  <img src={logo} alt="Logo" className="h-10 w-10 rounded-full border-2 border-green-500 p-0.5" />
-                  <span className="font-black text-green-900 tracking-tight">PAC MENU</span>
+              {/* Sidebar Header */}
+              <div className="p-6 flex justify-between items-center border-b border-gray-50 bg-white sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-600 p-1.5 rounded-xl shadow-lg shadow-green-200">
+                    <img src={logo} alt="Logo" className="h-8 w-8 rounded-lg object-contain bg-white" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-black text-green-900 leading-tight">PAC MENU</span>
+                    <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Navigation</span>
+                  </div>
                 </div>
-                <button onClick={() => setIsMenuOpen(false)} className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-full">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                <motion.button 
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsMenuOpen(false)} 
+                  className="p-2.5 text-gray-400 hover:text-green-600 bg-gray-50 hover:bg-green-50 rounded-xl transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                </button>
+                </motion.button>
               </div>
 
-              <div className="flex-grow overflow-y-auto py-6 px-4 space-y-3">
+              {/* Sidebar Links */}
+              <div className="flex-grow overflow-y-auto py-8 px-5 space-y-4 custom-scrollbar">
                 {[
                   { name: 'Home', path: '/', icon: '🏠' },
                   { name: 'Courses', path: '/courses', icon: '📚' },
@@ -210,50 +224,65 @@ const Header = ({ user, onLogout }) => {
                   { name: 'Contact', path: '/contact', icon: '📞' },
                   { name: 'About Us', path: '/about', icon: 'ℹ️' },
                   { name: 'Results', path: '/results', icon: '🏆' },
-                ].map((item) => (
-                  <Link
+                ].map((item, idx) => (
+                  <motion.div
                     key={item.path}
-                    to={item.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center space-x-4 p-4 rounded-2xl transition-all active:scale-[0.98] ${
-                      item.highlight 
-                        ? 'bg-green-600 text-white shadow-lg shadow-green-200 font-bold' 
-                        : 'bg-gray-50 text-gray-700 hover:bg-green-50 hover:text-green-700 font-semibold'
-                    }`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + idx * 0.05 }}
                   >
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="text-base">{item.name}</span>
-                  </Link>
+                    <Link
+                      to={item.path}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`flex items-center justify-between p-4 rounded-[1.25rem] transition-all group ${
+                        item.highlight 
+                          ? 'bg-green-600 text-white shadow-xl shadow-green-200' 
+                          : 'bg-gray-50 text-gray-700 hover:bg-green-50 hover:text-green-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className={`text-xl ${item.highlight ? 'filter brightness-0 invert' : ''}`}>{item.icon}</span>
+                        <span className="text-base font-bold tracking-tight">{item.name}</span>
+                      </div>
+                      <svg className={`w-5 h-5 opacity-0 group-hover:opacity-100 transition-all ${item.highlight ? 'text-white' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </motion.div>
                 ))}
               </div>
 
-              <div className="p-5 border-t border-gray-50 space-y-3 bg-gray-50/50">
+              {/* Sidebar Footer */}
+              <div className="p-6 border-t border-gray-50 bg-gray-50/30 space-y-4">
                 {user ? (
                   <div className="space-y-3">
                     {user.role === 'admin' && (
                       <Link
                         to="/admin-pac-portal"
                         onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center justify-center space-x-2 w-full p-4 bg-yellow-500 text-white font-black rounded-2xl shadow-lg active:scale-[0.98] transition-transform"
+                        className="flex items-center justify-center gap-3 w-full p-4 bg-yellow-500 text-white font-black rounded-2xl shadow-lg shadow-yellow-100 active:scale-[0.98] transition-transform"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         </svg>
                         <span>Admin Portal</span>
                       </Link>
                     )}
                     <button
                       onClick={handleLogout}
-                      className="w-full p-4 bg-white text-red-600 font-bold rounded-2xl border border-red-100 shadow-sm active:scale-[0.98] transition-transform"
+                      className="w-full p-4 bg-white text-red-600 font-bold rounded-2xl border border-red-100 shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                     >
-                      Logout ({user.fullName.split(' ')[0]})
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      <span>Logout</span>
                     </button>
                   </div>
                 ) : (
                   <Link
                     to="/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center justify-center w-full p-4 bg-white text-gray-700 font-bold rounded-2xl border border-gray-200 shadow-sm active:scale-[0.98] transition-transform"
+                    className="flex items-center justify-center w-full p-4 bg-white text-green-700 font-bold rounded-2xl border-2 border-green-50 shadow-sm active:scale-[0.98] transition-transform"
                   >
                     Student Login
                   </Link>
@@ -261,13 +290,13 @@ const Header = ({ user, onLogout }) => {
                 <Link
                   to="/enroll"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-center w-full p-4 bg-green-600 text-white font-black rounded-2xl shadow-lg shadow-green-200 active:scale-[0.98] transition-transform"
+                  className="flex items-center justify-center w-full p-4 bg-green-600 text-white font-black rounded-2xl shadow-xl shadow-green-200 active:scale-[0.98] transition-transform"
                 >
                   Enroll Now
                 </Link>
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </header>
