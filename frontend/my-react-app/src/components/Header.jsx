@@ -191,10 +191,10 @@ const Header = ({ user, onLogout }) => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col overflow-hidden"
+              className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col"
             >
-              {/* Sidebar Header */}
-              <div className="p-6 flex justify-between items-center border-b border-gray-50 bg-white sticky top-0 z-10">
+              {/* Sidebar Header - Fixed at top */}
+              <div className="shrink-0 p-5 flex justify-between items-center border-b border-gray-100 bg-white">
                 <div className="flex items-center gap-3">
                   <div className="bg-green-600 p-1.5 rounded-xl shadow-lg shadow-green-200">
                     <img src={logo} alt="Logo" className="h-8 w-8 rounded-lg object-contain bg-white" />
@@ -207,7 +207,7 @@ const Header = ({ user, onLogout }) => {
                 <motion.button 
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsMenuOpen(false)} 
-                  className="p-2.5 text-gray-400 hover:text-green-600 bg-gray-50 hover:bg-green-50 rounded-xl transition-colors"
+                  className="p-2 text-gray-400 hover:text-green-600 bg-gray-50 hover:bg-green-50 rounded-xl transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
@@ -215,85 +215,87 @@ const Header = ({ user, onLogout }) => {
                 </motion.button>
               </div>
 
-              {/* Sidebar Links */}
-              <div className="flex-grow overflow-y-auto py-8 px-5 space-y-4 custom-scrollbar">
-                {[
-                  { name: 'Home', path: '/', icon: '🏠' },
-                  { name: 'Courses', path: '/courses', icon: '📚' },
-                  { name: 'Board Exam', path: '/board-exam', icon: '📝', highlight: true },
-                  { name: 'Contact', path: '/contact', icon: '📞' },
-                  { name: 'About Us', path: '/about', icon: 'ℹ️' },
-                  { name: 'Results', path: '/results', icon: '🏆' },
-                ].map((item, idx) => (
-                  <motion.div
-                    key={item.path}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + idx * 0.05 }}
-                  >
-                    <Link
-                      to={item.path}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`flex items-center justify-between p-4 rounded-[1.25rem] transition-all group ${
-                        item.highlight 
-                          ? 'bg-green-600 text-white shadow-xl shadow-green-200' 
-                          : 'bg-gray-50 text-gray-700 hover:bg-green-50 hover:text-green-700'
-                      }`}
+              {/* Sidebar Content - Scrollable */}
+              <div className="flex-grow overflow-y-auto overflow-x-hidden">
+                <div className="py-6 px-4 space-y-3">
+                  {[
+                    { name: 'Home', path: '/', icon: '🏠' },
+                    { name: 'Courses', path: '/courses', icon: '📚' },
+                    { name: 'Board Exam', path: '/board-exam', icon: '📝', highlight: true },
+                    { name: 'Contact Us', path: '/contact', icon: '📞' },
+                    { name: 'About Us', path: '/about', icon: 'ℹ️' },
+                    { name: 'Results', path: '/results', icon: '🏆' },
+                  ].map((item, idx) => (
+                    <motion.div
+                      key={item.path}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 + idx * 0.05 }}
                     >
-                      <div className="flex items-center gap-4">
-                        <span className={`text-xl ${item.highlight ? 'filter brightness-0 invert' : ''}`}>{item.icon}</span>
-                        <span className="text-base font-bold tracking-tight">{item.name}</span>
-                      </div>
-                      <svg className={`w-5 h-5 opacity-0 group-hover:opacity-100 transition-all ${item.highlight ? 'text-white' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Sidebar Footer */}
-              <div className="p-6 border-t border-gray-50 bg-gray-50/30 space-y-4">
-                {user ? (
-                  <div className="space-y-3">
-                    {user.role === 'admin' && (
                       <Link
-                        to="/admin-pac-portal"
+                        to={item.path}
                         onClick={() => setIsMenuOpen(false)}
-                        className="flex items-center justify-center gap-3 w-full p-4 bg-yellow-500 text-white font-black rounded-2xl shadow-lg shadow-yellow-100 active:scale-[0.98] transition-transform"
+                        className={`flex items-center justify-between p-4 rounded-2xl transition-all group ${
+                          item.highlight 
+                            ? 'bg-green-600 text-white shadow-lg shadow-green-200' 
+                            : 'bg-gray-50 text-gray-700 active:bg-green-50 active:text-green-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className={`text-xl ${item.highlight ? 'filter brightness-0 invert' : ''}`}>{item.icon}</span>
+                          <span className="text-base font-bold tracking-tight">{item.name}</span>
+                        </div>
+                        <svg className={`w-5 h-5 transition-all ${item.highlight ? 'text-white' : 'text-green-600 opacity-30'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Sidebar Footer - Inside scroll to ensure visibility on short screens */}
+                <div className="p-4 border-t border-gray-50 bg-gray-50/30 space-y-3 pb-10">
+                  {user ? (
+                    <div className="space-y-3">
+                      {user.role === 'admin' && (
+                        <Link
+                          to="/admin-pac-portal"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center justify-center gap-3 w-full p-4 bg-yellow-500 text-white font-black rounded-2xl shadow-lg shadow-yellow-100 active:scale-[0.98] transition-transform"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          </svg>
+                          <span>Admin Portal</span>
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full p-4 bg-white text-red-600 font-bold rounded-2xl border border-red-100 shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
-                        <span>Admin Portal</span>
-                      </Link>
-                    )}
-                    <button
-                      onClick={handleLogout}
-                      className="w-full p-4 bg-white text-red-600 font-bold rounded-2xl border border-red-100 shadow-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <Link
+                      to="/login"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center justify-center w-full p-4 bg-white text-green-700 font-bold rounded-2xl border-2 border-green-50 shadow-sm active:scale-[0.98] transition-transform"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                ) : (
+                      Student Login
+                    </Link>
+                  )}
                   <Link
-                    to="/login"
+                    to="/enroll"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center justify-center w-full p-4 bg-white text-green-700 font-bold rounded-2xl border-2 border-green-50 shadow-sm active:scale-[0.98] transition-transform"
+                    className="flex items-center justify-center w-full p-4 bg-green-600 text-white font-black rounded-2xl shadow-xl shadow-green-200 active:scale-[0.98] transition-transform"
                   >
-                    Student Login
+                    Enroll Now
                   </Link>
-                )}
-                <Link
-                  to="/enroll"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-center w-full p-4 bg-green-600 text-white font-black rounded-2xl shadow-xl shadow-green-200 active:scale-[0.98] transition-transform"
-                >
-                  Enroll Now
-                </Link>
+                </div>
               </div>
             </motion.div>
           </div>
