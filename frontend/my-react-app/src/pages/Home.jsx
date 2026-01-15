@@ -266,13 +266,6 @@ const Home = () => {
                 onError={(e) => console.error("Video loading error:", e)}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 md:bg-gradient-to-r md:from-black/60 md:to-transparent"></div>
-              
-              <div className="absolute bottom-8 left-8 md:bottom-20 md:left-20 max-w-sm">
-                <div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/10">
-                  <p className="text-white font-black text-xl mb-2">Modern Agriculture</p>
-                  <p className="text-gray-300 text-sm font-medium">Experience the blend of technology and nature in our specialized curriculum.</p>
-                </div>
-              </div>
             </div>
           </motion.div>
         </div>
