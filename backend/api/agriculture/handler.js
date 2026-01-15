@@ -5,6 +5,8 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db.js");
 
+const path = require("path");
+
 dotenv.config();
 
 const app = express();
@@ -27,6 +29,9 @@ app.use(cors({
 
 app.use(express.json());
 
+// Serve static files from uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Add a middleware to ensure DB is connected
 app.use(async (req, res, next) => {
   await connectToDatabase();
@@ -47,6 +52,21 @@ app.get("/", (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  
+  // Handle Multer errors
+  if (err.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        success: false, 
+        message: "File too large. Maximum size allowed is 50MB." 
+      });
+    }
+    return res.status(400).json({ 
+      success: false, 
+      message: err.message 
+    });
+  }
+
   res.status(500).json({ 
     error: "Internal Server Error", 
     message: err.message 
@@ -55,8 +75,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  app.listen(PORT, "127.0.0.1", () => {
+    console.log(`Server running on http://127.0.0.1:${PORT}`);
   });
 }
 

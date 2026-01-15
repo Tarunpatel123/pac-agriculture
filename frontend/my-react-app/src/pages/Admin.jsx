@@ -10,17 +10,28 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('enrollments');
   const [searchTerm, setSearchTerm] = useState('');
   const [showLinkGen, setShowLinkGen] = useState(false);
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [newMaterial, setNewMaterial] = useState({
+    title: '',
+    description: '',
+    fileUrl: '',
+    category: 'Board Exam',
+    isPublished: true,
+    file: null
+  });
+  const [uploading, setUploading] = useState(false);
   const [customLink, setCustomLink] = useState('');
   const [linkSource, setLinkSource] = useState('instagram');
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || '';
-  const ADMIN_SECRET = 'pac-admin-2026'; // This should ideally be in .env but for simplicity
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+  const ADMIN_SECRET = 'pac-admin-2026';
 
   const handleLogin = (e) => {
     e.preventDefault();
     console.log('Admin login attempt...');
+    console.log('Using API URL:', API_BASE_URL);
     if (passcode === ADMIN_SECRET) {
       console.log('Login successful');
       setLoading(true); // Set loading immediately
@@ -116,6 +127,86 @@ const Admin = () => {
     }
   };
 
+  const handleCreateMaterial = async (e) => {
+    e.preventDefault();
+    setUploading(true);
+    try {
+      let finalFileUrl = newMaterial.fileUrl;
+
+      // If a file is selected, upload it first
+      if (newMaterial.file) {
+        const formData = new FormData();
+        formData.append('file', newMaterial.file);
+        
+        const uploadRes = await axios.post(`${API_BASE_URL}/api/admin/upload`, formData, {
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            'x-admin-secret': ADMIN_SECRET 
+          }
+        });
+        
+        if (uploadRes.data.success) {
+          finalFileUrl = uploadRes.data.fileUrl;
+        } else {
+          throw new Error('File upload failed');
+        }
+      }
+
+      if (!finalFileUrl) {
+        alert('Please provide a file or a link');
+        setUploading(false);
+        return;
+      }
+
+      await axios.post(`${API_BASE_URL}/api/admin/materials`, {
+        ...newMaterial,
+        fileUrl: finalFileUrl
+      }, {
+        headers: { 'x-admin-secret': ADMIN_SECRET }
+      });
+
+      setShowMaterialForm(false);
+      setNewMaterial({
+        title: '',
+        description: '',
+        fileUrl: '',
+        category: 'Board Exam',
+        isPublished: true,
+        file: null
+      });
+      fetchStats();
+    } catch (err) {
+      console.error('Create material error:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to create material';
+      alert(errorMsg);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const toggleMaterialPublish = async (id, currentStatus) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/api/admin/materials/${id}`, { isPublished: !currentStatus }, {
+        headers: { 'x-admin-secret': ADMIN_SECRET }
+      });
+      fetchStats();
+    } catch (err) {
+      alert('Failed to update status');
+    }
+  };
+
+  const deleteMaterial = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this material?')) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/admin/materials/${id}`, {
+        headers: { 'x-admin-secret': ADMIN_SECRET }
+      });
+      fetchStats();
+    } catch (err) {
+      alert('Failed to delete material');
+    }
+  };
+
   const generateLink = () => {
     const base = window.location.origin + '/enroll';
     const link = `${base}?ref=${linkSource}`;
@@ -158,6 +249,18 @@ const Admin = () => {
         `"${v.createdAt ? new Date(v.createdAt).toLocaleString('en-IN') : 'N/A'}"`
       ]);
       fileName = `PAC_Visits_${new Date().toLocaleDateString()}.csv`;
+    } else if (activeTab === 'shares') {
+      const data = stats?.shares || [];
+      if (data.length === 0) return;
+      headers = ['Shared By', 'Mobile', 'Platform', 'IP', 'Date'];
+      rows = data.map(s => [
+        `"${s.userId?.fullName || 'Anonymous'}"`,
+        `"${s.userId?.mobileNumber || 'N/A'}"`,
+        `"${s.platform || 'Unknown'}"`,
+        `"${s.visitorInfo?.ip || 'Unknown'}"`,
+        `"${s.createdAt ? new Date(s.createdAt).toLocaleString('en-IN') : 'N/A'}"`
+      ]);
+      fileName = `PAC_Shares_${new Date().toLocaleDateString()}.csv`;
     } else {
       return;
     }
@@ -253,7 +356,9 @@ const Admin = () => {
         return shares.filter(s => 
           s && (
             (s.platform || '').toLowerCase().includes(term) ||
-            (s.visitorInfo?.ip && s.visitorInfo.ip.includes(term))
+            (s.visitorInfo?.ip && s.visitorInfo.ip.includes(term)) ||
+            (s.userId?.fullName && s.userId.fullName.toLowerCase().includes(term)) ||
+            (s.userId?.mobileNumber && s.userId.mobileNumber.includes(term))
           )
         );
       }
@@ -264,6 +369,15 @@ const Admin = () => {
             (c.name || '').toLowerCase().includes(term) ||
             (c.email || '').toLowerCase().includes(term) ||
             (c.subject || '').toLowerCase().includes(term)
+          )
+        );
+      }
+      if (activeTab === 'materials') {
+        const materials = stats.materials || [];
+        return materials.filter(m => 
+          m && (
+            (m.title || '').toLowerCase().includes(term) ||
+            (m.category || '').toLowerCase().includes(term)
           )
         );
       }
@@ -530,8 +644,17 @@ const Admin = () => {
           </div>
           
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto">
-            {['enrollments', 'visits', 'shares', 'contacts'].map((tab) => (
+            {activeTab === 'materials' && (
+              <button 
+                onClick={() => setShowMaterialForm(!showMaterialForm)}
+                className="w-full md:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-md shadow-blue-100 transition-all active:scale-95"
+              >
+                {showMaterialForm ? '✕ Close Form' : '➕ Add New Note/PDF'}
+              </button>
+            )}
+
+            <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
+            {['enrollments', 'visits', 'shares', 'contacts', 'materials'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => { setActiveTab(tab); setSearchTerm(''); }}
@@ -546,16 +669,104 @@ const Admin = () => {
             ))}
           </div>
             
-            {(activeTab === 'enrollments' || activeTab === 'visits') && (
+            {(activeTab === 'enrollments' || activeTab === 'visits' || activeTab === 'shares') && (
               <button 
                 onClick={downloadCSV}
                 className="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 flex items-center justify-center gap-2 shadow-md shadow-green-100 transition-all active:scale-95"
               >
-                📥 Download {activeTab === 'enrollments' ? 'Data' : 'Visits'} CSV
+                📥 Download {activeTab === 'enrollments' ? 'Data' : activeTab === 'visits' ? 'Visits' : 'Shares'} CSV
               </button>
             )}
           </div>
         </div>
+        
+        {/* Material Creation Form */}
+        {activeTab === 'materials' && showMaterialForm && (
+          <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100 mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Upload New Note / PDF</h3>
+            <form onSubmit={handleCreateMaterial} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase">Title</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. 12th Agriculture Imp Questions"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  value={newMaterial.title}
+                  onChange={(e) => setNewMaterial({...newMaterial, title: e.target.value})}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
+                <select 
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  value={newMaterial.category}
+                  onChange={(e) => setNewMaterial({...newMaterial, category: e.target.value})}
+                >
+                  <option value="Board Exam">Board Exam Preparation</option>
+                  <option value="Notes">General Notes</option>
+                  <option value="PDF">PDF Material</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+                <textarea 
+                  placeholder="Brief details about the material..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 h-20"
+                  value={newMaterial.description}
+                  onChange={(e) => setNewMaterial({...newMaterial, description: e.target.value})}
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Upload File (PDF or Image)</label>
+                <div className="flex flex-col md:flex-row gap-4 items-center">
+                  <input 
+                    type="file" 
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                    onChange={(e) => setNewMaterial({...newMaterial, file: e.target.files[0]})}
+                  />
+                  <div className="text-gray-400 text-xs font-bold px-4">OR</div>
+                  <input 
+                    type="url" 
+                    placeholder="Paste your PDF link here (optional if file uploaded)"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    value={newMaterial.fileUrl}
+                    onChange={(e) => setNewMaterial({...newMaterial, fileUrl: e.target.value})}
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">Note: Uploading a file will automatically generate a link. Max size: 10MB.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="isPublished"
+                  checked={newMaterial.isPublished}
+                  onChange={(e) => setNewMaterial({...newMaterial, isPublished: e.target.checked})}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="isPublished" className="text-sm font-medium text-gray-700">Publish Immediately</label>
+              </div>
+              <div className="md:col-span-2 flex justify-end">
+                <button 
+                  type="submit"
+                  disabled={uploading}
+                  className={`bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100 flex items-center gap-2 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {uploading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    'Save & Upload'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -684,9 +895,9 @@ const Admin = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shared By</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platform</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visitor IP</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                   </tr>
                 </thead>
@@ -694,15 +905,22 @@ const Admin = () => {
                   {getFilteredData().map((s, idx) => (
                     <tr key={s._id || `share-${idx}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-gray-900">
+                          {s.userId?.fullName || 'Anonymous Visitor'}
+                        </div>
+                        {s.userId?.mobileNumber && (
+                          <div className="text-xs text-green-600 font-medium">
+                            📞 {s.userId.mobileNumber}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-xs font-bold">
                           {s.platform || 'Unknown'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {s.visitorInfo?.ip || 'N/A'}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {s.visitorInfo?.city || 'Unknown'}
+                        {s.visitorInfo?.ip || 'Unknown'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                         {s.createdAt ? new Date(s.createdAt).toLocaleString('en-IN') : 'N/A'}
@@ -743,6 +961,67 @@ const Admin = () => {
                           onClick={() => deleteContact(c._id)}
                           className="text-red-400 hover:text-red-600 transition"
                           title="Delete Message"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {activeTab === 'materials' && (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Note Info</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Downloads</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {getFilteredData().map((m, idx) => (
+                    <tr key={m._id || `material-${idx}`} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-bold text-gray-900">{m.title}</div>
+                        <div className="text-xs text-gray-500 line-clamp-1 max-w-xs">{m.description}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
+                          {m.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button 
+                          onClick={() => toggleMaterialPublish(m._id, m.isPublished)}
+                          className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                            m.isPublished ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {m.isPublished ? 'Published' : 'Draft'}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-bold">
+                        ⬇️ {m.downloadCount || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap space-x-3">
+                        <a 
+                          href={m.fileUrl} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          👁️
+                        </a>
+                        <button 
+                          onClick={() => deleteMaterial(m._id)}
+                          className="text-red-400 hover:text-red-600 transition"
+                          title="Delete Material"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -57,11 +57,11 @@ const Hero = () => {
         >
           <Link to="/courses" className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold text-lg rounded-lg transition duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center">
             <span>Explore Courses</span>
-            <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-            </svg>
           </Link>
-          <Link to="/enroll" className="px-8 py-4 bg-white hover:bg-gray-100 text-green-900 font-bold text-lg rounded-lg transition duration-300 transform hover:scale-105 shadow-lg">
+          <Link to="/board-exam" className="px-8 py-4 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold text-lg rounded-lg transition duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+            <span>📚 Notes & PDFs</span>
+          </Link>
+          <Link to="/enroll" className="px-8 py-4 bg-white hover:bg-gray-100 text-green-900 font-bold text-lg rounded-lg transition duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center">
             Enroll Now
           </Link>
         </motion.div>

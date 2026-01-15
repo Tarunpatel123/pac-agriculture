@@ -13,6 +13,11 @@ const shareSchema = new mongoose.Schema(
     visitorInfo: {
       ip: String,
       userAgent: String
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false
     }
   },
   {

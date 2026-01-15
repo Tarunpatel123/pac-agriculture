@@ -35,7 +35,10 @@ const Header = ({ user, onLogout }) => {
         await fetch(`${API_BASE_URL}/api/track-share`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform: 'Web Share API' })
+          body: JSON.stringify({ 
+            platform: 'Web Share API',
+            userId: user ? user.id : null
+          })
         });
       } else {
         // Fallback for browsers that don't support Web Share API
@@ -46,7 +49,10 @@ const Header = ({ user, onLogout }) => {
         await fetch(`${API_BASE_URL}/api/track-share`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform: 'WhatsApp (Fallback)' })
+          body: JSON.stringify({ 
+            platform: 'WhatsApp (Fallback)',
+            userId: user ? user.id : null
+          })
         });
       }
     } catch (err) {
@@ -63,6 +69,13 @@ const Header = ({ user, onLogout }) => {
             <nav className="flex items-center space-x-6">
               <Link to="/" className="text-gray-700 hover:text-green-700 font-bold transition">Home</Link>
               <Link to="/courses" className="text-gray-700 hover:text-green-700 font-bold transition">Courses</Link>
+              <Link to="/board-exam" className="text-green-700 hover:text-green-800 font-black transition flex items-center gap-1">
+                <span>Board Exam</span>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              </Link>
               <Link to="/contact" className="text-gray-700 hover:text-green-700 font-bold transition">Contact</Link>
             </nav>
           </div>
@@ -135,6 +148,7 @@ const Header = ({ user, onLogout }) => {
         <nav className="md:hidden bg-green-50 px-4 pt-2 pb-4 space-y-2 border-t border-green-200">
           <Link to="/" onClick={() => setIsMenuOpen(false)} className="block text-gray-700 hover:text-green-700 font-bold py-2">Home</Link>
           <Link to="/courses" onClick={() => setIsMenuOpen(false)} className="block text-gray-700 hover:text-green-700 font-bold py-2">Courses</Link>
+          <Link to="/board-exam" onClick={() => setIsMenuOpen(false)} className="block text-green-700 hover:text-green-800 font-black py-2">Board Exam 📚</Link>
           <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="block text-gray-700 hover:text-green-700 font-bold py-2">Contact</Link>
           {user ? (
             <>

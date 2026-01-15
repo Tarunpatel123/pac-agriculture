@@ -2,6 +2,7 @@ const User = require("../models/user");
 const Visit = require("../models/visit");
 const Share = require("../models/share");
 const Contact = require("../models/contact");
+const Material = require("../models/material");
 
 const getAdminStats = async (req, res) => {
   console.log('Admin Stats request received');
@@ -16,11 +17,12 @@ const getAdminStats = async (req, res) => {
     }
 
     console.log('Fetching data from database...');
-    const [enrollments, visits, shares, contacts] = await Promise.all([
+    const [enrollments, visits, shares, contacts, materials] = await Promise.all([
       User.find().sort({ createdAt: -1 }),
       Visit.find().sort({ createdAt: -1 }),
-      Share.find().sort({ createdAt: -1 }),
-      Contact.find().sort({ createdAt: -1 })
+      Share.find().populate('userId', 'fullName email mobileNumber').sort({ createdAt: -1 }),
+      Contact.find().sort({ createdAt: -1 }),
+      Material.find().sort({ createdAt: -1 })
     ]);
     console.log('Data fetched successfully');
 
@@ -29,10 +31,12 @@ const getAdminStats = async (req, res) => {
       totalVisits: visits.length,
       totalShares: shares.length,
       totalContacts: contacts.length,
+      totalMaterials: materials.length,
       enrollments,
       visits,
       shares,
-      contacts
+      contacts,
+      materials
     };
 
     res.status(200).json(stats);

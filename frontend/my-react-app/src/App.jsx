@@ -11,6 +11,7 @@ import Contact from './pages/Contact'
 import FeatureDetail from './pages/FeatureDetail'
 import Enroll from './pages/Enroll'
 import About from './pages/About'
+import BoardExam from './pages/BoardExam'
 import Admin from './pages/Admin'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -102,14 +103,19 @@ function AppContent() {
               <Contact />
             </ProtectedRoute>
           } />
-          <Route path="/enroll" element={
-            <ProtectedRoute>
-              <Enroll />
-            </ProtectedRoute>
-          } />
           <Route path="/about" element={
             <ProtectedRoute>
               <About />
+            </ProtectedRoute>
+          } />
+          <Route path="/board-exam" element={
+            <ProtectedRoute>
+              <BoardExam />
+            </ProtectedRoute>
+          } />
+          <Route path="/enroll" element={
+            <ProtectedRoute>
+              <Enroll />
             </ProtectedRoute>
           } />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
