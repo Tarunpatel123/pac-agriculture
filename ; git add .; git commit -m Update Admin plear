@@ -1,0 +1,133 @@
+warning: in the working copy of 'frontend/my-react-app/src/pages/Admin.jsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/frontend/my-react-app/src/pages/Admin.jsx b/frontend/my-react-app/src/pages/Admin.jsx[m
+[1mindex b0076f1..61d9208 100644[m
+[1m--- a/frontend/my-react-app/src/pages/Admin.jsx[m
+[1m+++ b/frontend/my-react-app/src/pages/Admin.jsx[m
+[36m@@ -217,9 +217,12 @@[m [mconst Admin = () => {[m
+     let headers = [];[m
+     let rows = [];[m
+     let fileName = '';[m
+[31m-[m
+[31m-    if (activeTab === 'enrollments') {[m
+[31m-      const data = stats?.enrollments || [];[m
+[32m+[m[41m    [m
+[32m+[m[32m    if (activeTab === 'enrollments' || activeTab === 'registered') {[m
+[32m+[m[32m      const data = activeTab === 'registered'[m[41m [m
+[32m+[m[32m        ? (stats?.enrollments || []).filter(u => u.password)[m
+[32m+[m[32m        : (stats?.enrollments || []);[m
+[32m+[m[41m        [m
+       if (data.length === 0) return;[m
+       headers = ['Name', 'Class', 'Course', 'Mobile', 'Status', 'Distance', 'Location', 'Date'];[m
+       rows = data.map(user => [[m
+[36m@@ -232,7 +235,7 @@[m [mconst Admin = () => {[m
+         `"${typeof user.location === 'object' ? (user.location.address || 'Unknown') : (user.location || 'Unknown')}"`,[m
+         `"${user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}"`[m
+       ]);[m
+[31m-      fileName = `PAC_Enrollments_${new Date().toLocaleDateString()}.csv`;[m
+[32m+[m[32m      fileName = `PAC_${activeTab === 'registered' ? 'Registered_Users' : 'Enrollments'}_${new Date().toLocaleDateString()}.csv`;[m
+     } else if (activeTab === 'visits') {[m
+       const data = stats?.visits || [];[m
+       if (data.length === 0) return;[m
+[36m@@ -290,11 +293,15 @@[m [mconst Admin = () => {[m
+         Called: 0,[m
+         Interested: 0,[m
+         Joined: 0,[m
+[31m-        'Not Interested': 0[m
+[32m+[m[32m        'Not Interested': 0,[m
+[32m+[m[32m        'Registered': 0[m
+       };[m
+ [m
+       enrollments.forEach(u => {[m
+         if (!u) return;[m
+[32m+[m[32m        if (u.password) {[m
+[32m+[m[32m          statusCounts['Registered'] = (statusCounts['Registered'] || 0) + 1;[m
+[32m+[m[32m        }[m
+         const s = u.status || 'Pending';[m
+         statusCounts[s] = (statusCounts[s] || 0) + 1;[m
+       });[m
+[36m@@ -330,16 +337,22 @@[m [mconst Admin = () => {[m
+       if (!stats) return [];[m
+       const term = searchTerm.toLowerCase();[m
+       [m
+[31m-      if (activeTab === 'enrollments') {[m
+[32m+[m[32m      if (activeTab === 'enrollments' || activeTab === 'registered') {[m
+         const enrollments = stats.enrollments || [];[m
+[31m-        return enrollments.filter(u => [m
+[31m-          u && ([m
+[32m+[m[32m        return enrollments.filter(u => {[m
+[32m+[m[32m          if (!u) return false;[m
+[32m+[m[41m          [m
+[32m+[m[32m          // If in registered tab, only show users with password[m
+[32m+[m[32m          if (activeTab === 'registered' && !u.password) return false;[m
+[32m+[m[32m          // If in enrollments tab, show all (or could filter for those without password if preferred)[m
+[32m+[m[41m          [m
+[32m+[m[32m          return ([m
+             (u.fullName || '').toLowerCase().includes(term) || [m
+             (u.mobileNumber || '').includes(term) ||[m
+             (u.interested_Course || '').toLowerCase().includes(term) ||[m
+             (typeof u.location === 'object' ? (u.location.address || '') : (u.location || '')).toLowerCase().includes(term)[m
+[31m-          )[m
+[31m-        );[m
+[32m+[m[32m          );[m
+[32m+[m[32m        });[m
+       }[m
+       if (activeTab === 'visits') {[m
+         const visits = stats.visits || [];[m
+[36m@@ -566,11 +579,15 @@[m [mconst Admin = () => {[m
+         )}[m
+ [m
+         {/* Stats Cards */}[m
+[31m-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">[m
+[32m+[m[32m        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">[m
+           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">[m
+             <p className="text-gray-500 text-[10px] uppercase font-bold">Total Enrollments</p>[m
+             <h3 className="text-2xl font-bold">{stats?.totalEnrollments || 0}</h3>[m
+           </div>[m
+[32m+[m[32m          <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-500">[m
+[32m+[m[32m            <p className="text-gray-500 text-[10px] uppercase font-bold">Registered Users</p>[m
+[32m+[m[32m            <h3 className="text-2xl font-bold text-indigo-600">{stats?.enrollments?.filter(u => u.password).length || 0}</h3>[m
+[32m+[m[32m          </div>[m
+           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">[m
+             <p className="text-gray-500 text-[10px] uppercase font-bold">Joined Students</p>[m
+             <h3 className="text-2xl font-bold text-green-600">{getVisitStats().statusCounts.Joined || 0}</h3>[m
+[36m@@ -654,7 +671,7 @@[m [mconst Admin = () => {[m
+             )}[m
+ [m
+             <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto overflow-x-auto">[m
+[31m-            {['enrollments', 'visits', 'shares', 'contacts', 'materials'].map((tab) => ([m
+[32m+[m[32m            {['enrollments', 'registered', 'visits', 'shares', 'contacts', 'materials'].map((tab) => ([m
+               <button[m
+                 key={tab}[m
+                 onClick={() => { setActiveTab(tab); setSearchTerm(''); }}[m
+[36m@@ -664,17 +681,19 @@[m [mconst Admin = () => {[m
+                     : 'text-gray-500 hover:text-green-600'[m
+                 }`}[m
+               >[m
+[31m-                {tab === 'contacts' ? `Contacts (${stats?.totalContacts || 0})` : tab}[m
+[32m+[m[32m                {tab === 'contacts' ? `Contacts (${stats?.totalContacts || 0})` :[m[41m [m
+[32m+[m[32m                 tab === 'registered' ? `Registered (${stats?.enrollments?.filter(u => u.password).length || 0})` :[m[41m [m
+[32m+[m[32m                 tab}[m
+               </button>[m
+             ))}[m
+           </div>[m
+             [m
+[31m-            {(activeTab === 'enrollments' || activeTab === 'visits' || activeTab === 'shares') && ([m
+[32m+[m[32m            {(activeTab === 'enrollments' || activeTab === 'registered' || activeTab === 'visits' || activeTab === 'shares') && ([m
+               <button [m
+                 onClick={downloadCSV}[m
+                 className="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 flex items-center justify-center gap-2 shadow-md shadow-green-100 transition-all active:scale-95"[m
+               >[m
+[31m-                📥 Download {activeTab === 'enrollments' ? 'Data' : activeTab === 'visits' ? 'Visits' : 'Shares'} CSV[m
+[32m+[m[32m                📥 Download {activeTab === 'enrollments' ? 'Leads' : activeTab === 'registered' ? 'Users' : activeTab === 'visits' ? 'Visits' : 'Shares'} CSV[m
+               </button>[m
+             )}[m
+           </div>[m
+[36m@@ -774,7 +793,7 @@[m [mconst Admin = () => {[m
+           </div>[m
+         ) : ([m
+           <div className="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">[m
+[31m-            {activeTab === 'enrollments' && ([m
+[32m+[m[32m            {(activeTab === 'enrollments' || activeTab === 'registered') && ([m
+               <table className="min-w-full divide-y divide-gray-200">[m
+                 <thead className="bg-gray-50">[m
+                   <tr>[m

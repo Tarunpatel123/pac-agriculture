@@ -217,9 +217,12 @@ const Admin = () => {
     let headers = [];
     let rows = [];
     let fileName = '';
-
-    if (activeTab === 'enrollments') {
-      const data = stats?.enrollments || [];
+    
+    if (activeTab === 'enrollments' || activeTab === 'registered') {
+      const data = activeTab === 'registered' 
+        ? (stats?.enrollments || []).filter(u => u.password)
+        : (stats?.enrollments || []);
+        
       if (data.length === 0) return;
       headers = ['Name', 'Class', 'Course', 'Mobile', 'Status', 'Distance', 'Location', 'Date'];
       rows = data.map(user => [
@@ -232,7 +235,7 @@ const Admin = () => {
         `"${typeof user.location === 'object' ? (user.location.address || 'Unknown') : (user.location || 'Unknown')}"`,
         `"${user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}"`
       ]);
-      fileName = `PAC_Enrollments_${new Date().toLocaleDateString()}.csv`;
+      fileName = `PAC_${activeTab === 'registered' ? 'Registered_Users' : 'Enrollments'}_${new Date().toLocaleDateString()}.csv`;
     } else if (activeTab === 'visits') {
       const data = stats?.visits || [];
       if (data.length === 0) return;
@@ -290,11 +293,15 @@ const Admin = () => {
         Called: 0,
         Interested: 0,
         Joined: 0,
-        'Not Interested': 0
+        'Not Interested': 0,
+        'Registered': 0
       };
 
       enrollments.forEach(u => {
         if (!u) return;
+        if (u.password) {
+          statusCounts['Registered'] = (statusCounts['Registered'] || 0) + 1;
+        }
         const s = u.status || 'Pending';
         statusCounts[s] = (statusCounts[s] || 0) + 1;
       });
@@ -330,16 +337,22 @@ const Admin = () => {
       if (!stats) return [];
       const term = searchTerm.toLowerCase();
       
-      if (activeTab === 'enrollments') {
+      if (activeTab === 'enrollments' || activeTab === 'registered') {
         const enrollments = stats.enrollments || [];
-        return enrollments.filter(u => 
-          u && (
+        return enrollments.filter(u => {
+          if (!u) return false;
+          
+          // If in registered tab, only show users with password
+          if (activeTab === 'registered' && !u.password) return false;
+          // If in enrollments tab, show all (or could filter for those without password if preferred)
+          
+          return (
             (u.fullName || '').toLowerCase().includes(term) || 
             (u.mobileNumber || '').includes(term) ||
             (u.interested_Course || '').toLowerCase().includes(term) ||
             (typeof u.location === 'object' ? (u.location.address || '') : (u.location || '')).toLowerCase().includes(term)
-          )
-        );
+          );
+        });
       }
       if (activeTab === 'visits') {
         const visits = stats.visits || [];
@@ -566,10 +579,14 @@ const Admin = () => {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Total Enrollments</p>
             <h3 className="text-2xl font-bold">{stats?.totalEnrollments || 0}</h3>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-500">
+            <p className="text-gray-500 text-[10px] uppercase font-bold">Registered Users</p>
+            <h3 className="text-2xl font-bold text-indigo-600">{stats?.enrollments?.filter(u => u.password).length || 0}</h3>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Joined Students</p>
@@ -654,7 +671,7 @@ const Admin = () => {
             )}
 
             <div className="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
-            {['enrollments', 'visits', 'shares', 'contacts', 'materials'].map((tab) => (
+            {['enrollments', 'registered', 'visits', 'shares', 'contacts', 'materials'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => { setActiveTab(tab); setSearchTerm(''); }}
@@ -664,17 +681,19 @@ const Admin = () => {
                     : 'text-gray-500 hover:text-green-600'
                 }`}
               >
-                {tab === 'contacts' ? `Contacts (${stats?.totalContacts || 0})` : tab}
+                {tab === 'contacts' ? `Contacts (${stats?.totalContacts || 0})` : 
+                 tab === 'registered' ? `Registered (${stats?.enrollments?.filter(u => u.password).length || 0})` : 
+                 tab}
               </button>
             ))}
           </div>
             
-            {(activeTab === 'enrollments' || activeTab === 'visits' || activeTab === 'shares') && (
+            {(activeTab === 'enrollments' || activeTab === 'registered' || activeTab === 'visits' || activeTab === 'shares') && (
               <button 
                 onClick={downloadCSV}
                 className="w-full md:w-auto bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 flex items-center justify-center gap-2 shadow-md shadow-green-100 transition-all active:scale-95"
               >
-                📥 Download {activeTab === 'enrollments' ? 'Data' : activeTab === 'visits' ? 'Visits' : 'Shares'} CSV
+                📥 Download {activeTab === 'enrollments' ? 'Leads' : activeTab === 'registered' ? 'Users' : activeTab === 'visits' ? 'Visits' : 'Shares'} CSV
               </button>
             )}
           </div>
@@ -774,7 +793,7 @@ const Admin = () => {
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto">
-            {activeTab === 'enrollments' && (
+            {(activeTab === 'enrollments' || activeTab === 'registered') && (
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
