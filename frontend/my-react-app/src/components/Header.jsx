@@ -100,7 +100,7 @@ const Header = ({ user, onLogout }) => {
             </div>
 
             {/* Logo Section */}
-            <div className="flex-shrink-0 flex items-center justify-center md:flex-1">
+            <div className="flex-shrink-0 flex items-center justify-center md:flex-1 relative">
               <Link to="/" className="flex items-center space-x-2 md:flex-col md:space-x-0 group">
                 <img 
                   src={logo} 
@@ -114,8 +114,8 @@ const Header = ({ user, onLogout }) => {
                   <span className="hidden md:block text-[10px] md:text-xs font-bold text-green-700 uppercase tracking-[0.2em] mt-0.5">Barwaha</span>
                 </div>
               </Link>
-              {/* Hidden admin trigger */}
-              <Link to="/admin-pac-portal?direct=true" className="opacity-0 absolute w-4 h-4"></Link>
+              {/* Hidden admin trigger - Top Left corner of logo area */}
+              <Link to="/admin-pac-portal?direct=true" className="opacity-0 absolute top-0 left-0 w-12 h-12 z-50 cursor-default" title="Admin Portal"></Link>
             </div>
 
             {/* Desktop Right Nav */}
@@ -138,7 +138,9 @@ const Header = ({ user, onLogout }) => {
                     Logout
                   </button>
                 </div>
-              ) : null}
+              ) : (
+                <Link to="/login" className="text-gray-600 hover:text-green-600 font-bold transition-colors text-sm px-3 py-1.5">Login</Link>
+              )}
               <button 
                 onClick={handleShare}
                 className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors border border-transparent hover:border-green-100"

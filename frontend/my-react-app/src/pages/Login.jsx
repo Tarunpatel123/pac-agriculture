@@ -114,6 +114,11 @@ const Login = ({ onLogin }) => {
                                     placeholder="••••••••"
                                 />
                             </div>
+                            <div className="flex justify-end mt-2">
+                                <Link to="/forgot-password" size="sm" className="text-sm font-bold text-green-400 hover:text-green-300 transition-colors">
+                                    Forgot Password?
+                                </Link>
+                            </div>
                         </div>
 
                         <button

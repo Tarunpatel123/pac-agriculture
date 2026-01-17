@@ -17,22 +17,26 @@ const getAdminStats = async (req, res) => {
     }
 
     console.log('Fetching data from database...');
-    const [enrollments, visits, shares, contacts, materials] = await Promise.all([
-      User.find().sort({ createdAt: -1 }),
+    const [enrollments, registeredUsers, visits, shares, contacts, materials] = await Promise.all([
+      User.find({ userType: { $ne: 'registered' } }).sort({ createdAt: -1 }),
+      User.find({ userType: 'registered' }).sort({ createdAt: -1 }),
       Visit.find().sort({ createdAt: -1 }),
       Share.find().populate('userId', 'fullName email mobileNumber').sort({ createdAt: -1 }),
       Contact.find().sort({ createdAt: -1 }),
       Material.find().sort({ createdAt: -1 })
     ]);
+    console.log(`Fetched: ${enrollments.length} enrollments, ${registeredUsers.length} registered users`);
     console.log('Data fetched successfully');
 
     const stats = {
       totalEnrollments: enrollments.length,
+      totalRegistered: registeredUsers.length,
       totalVisits: visits.length,
       totalShares: shares.length,
       totalContacts: contacts.length,
       totalMaterials: materials.length,
       enrollments,
+      registeredUsers,
       visits,
       shares,
       contacts,

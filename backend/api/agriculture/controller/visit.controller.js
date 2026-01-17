@@ -1,4 +1,3 @@
-const nodemailer = require("nodemailer");
 const axios = require("axios");
 const Visit = require("../models/visit");
 
@@ -20,9 +19,27 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   return distance.toFixed(2);
 };
 
+const getBrowserInfo = (ua) => {
+  let browser = "Unknown";
+  if (ua.includes("Chrome")) browser = "Google Chrome";
+  else if (ua.includes("Firefox")) browser = "Mozilla Firefox";
+  else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Apple Safari";
+  else if (ua.includes("Edge")) browser = "Microsoft Edge";
+  else if (ua.includes("Opera") || ua.includes("OPR")) browser = "Opera";
+  
+  let os = "Unknown";
+  if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+  else if (ua.includes("Macintosh")) os = "MacOS";
+  else if (ua.includes("Linux")) os = "Linux";
+  
+  return { browser, os };
+};
+
 const trackVisit = async (req, res) => {
   try {
-    const { urlParams = {}, pagePath } = req.body;
+    const { urlParams = {}, pagePath, extraInfo = {} } = req.body;
 
     // Skip tracking for Admin Portal visits
     if (pagePath === '/admin-pac-portal') {
@@ -30,6 +47,7 @@ const trackVisit = async (req, res) => {
     }
 
     const userAgent = req.headers['user-agent'] || 'Unknown';
+    const { browser, os } = getBrowserInfo(userAgent);
     const referrer = req.headers['referer'] || req.headers['referrer'] || 'Direct';
     
     let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -51,6 +69,8 @@ const trackVisit = async (req, res) => {
 
     let locationInfo = "Local/Unknown";
     let distanceInfo = "N/A";
+    let mapUrl = "";
+    let ispInfo = "Unknown";
     let geoData = { city: 'Local', regionName: 'Unknown', country: 'Unknown' };
 
     // For testing locally, if IP is local, use a dummy real IP to show data
@@ -61,14 +81,17 @@ const trackVisit = async (req, res) => {
 
     try {
       console.log(`Fetching Geo info for IP: ${fetchIp}`);
-      const geoResponse = await axios.get(`http://ip-api.com/json/${fetchIp}`);
+      const geoResponse = await axios.get(`http://ip-api.com/json/${fetchIp}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query`);
       console.log("Geo Response Data:", geoResponse.data);
       
       if (geoResponse.data.status === 'success') {
         geoData = geoResponse.data;
-        const { city, regionName, country, lat, lon } = geoResponse.data;
+        const { city, regionName, country, lat, lon, isp } = geoResponse.data;
         locationInfo = `${city}, ${regionName}, ${country}`;
-        distanceInfo = `${calculateDistance(BARWAHA_LAT, BARWAHA_LON, lat, lon)} KM`;
+        ispInfo = isp;
+        const dist = calculateDistance(BARWAHA_LAT, BARWAHA_LON, lat, lon);
+        distanceInfo = `${dist} KM`;
+        mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
       } else {
         console.log("Geo API returned fail status:", geoResponse.data.message);
       }
@@ -84,59 +107,26 @@ const trackVisit = async (req, res) => {
       country: geoData.country,
       location: locationInfo,
       distance: distanceInfo,
+      isp: ispInfo,
+      browser,
+      os,
+      screenResolution: extraInfo.screenResolution || "Unknown",
+      language: extraInfo.language || "Unknown",
+      mapUrl,
       userAgent,
       deviceType,
       pagePath: pagePath || '/',
       referrer,
       platform: (urlParams && urlParams.platform) || 'Direct',
-      // Store raw url params as a string or object if needed
       metadata: JSON.stringify(urlParams || {})
     });
 
-    // Send response back to frontend with distance info (will be sent at the end)
+    // Send response back to frontend
     const responseData = { 
       success: true, 
       distance: distanceInfo,
       location: locationInfo 
     };
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_PORT == 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: process.env.SMTP_USER, // Sending to yourself
-      subject: "🚨 Alert: Someone just opened your website link!",
-      html: `
-        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee;">
-          <h2 style="color: #d32f2f;">New Visitor Alert!</h2>
-          <p>Someone just landed on your website.</p>
-          <hr>
-          <p><strong>🕒 Time:</strong> ${visitTime}</p>
-          <p><strong>🌐 IP Address:</strong> ${ip}</p>
-          <p><strong>📍 Location:</strong> ${locationInfo}</p>
-          <p><strong>📏 Distance from Barwaha:</strong> <span style="color: #2e7d32; font-weight: bold;">${distanceInfo}</span></p>
-          <p><strong>🔗 Referrer (Came from):</strong> ${referrer}</p>
-          <p><strong>📱 Device Info:</strong> ${userAgent}</p>
-          <hr>
-          <h3>Detected Info from Link:</h3>
-          <pre>${JSON.stringify(urlParams, null, 2)}</pre>
-          <p style="font-size: 12px; color: #666;">Note: Personal info like name/phone can only be detected if it's in the URL link you shared.</p>
-        </div>
-      `,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) console.log("Visit Email Error:", error);
-      else console.log("Visit Alert Sent: " + info.response);
-    });
 
     res.status(200).json(responseData);
   } catch (error) {

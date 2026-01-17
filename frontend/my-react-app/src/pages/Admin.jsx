@@ -220,7 +220,7 @@ const Admin = () => {
     
     if (activeTab === 'enrollments' || activeTab === 'registered') {
       const data = activeTab === 'registered' 
-        ? (stats?.enrollments || []).filter(u => u.password)
+        ? (stats?.registeredUsers || [])
         : (stats?.enrollments || []);
         
       if (data.length === 0) return;
@@ -285,6 +285,7 @@ const Admin = () => {
     try {
       const visits = stats?.visits || [];
       const enrollments = stats?.enrollments || [];
+      const registeredUsers = stats?.registeredUsers || [];
       const devices = {};
       const pages = {};
       const referrers = {};
@@ -294,14 +295,11 @@ const Admin = () => {
         Interested: 0,
         Joined: 0,
         'Not Interested': 0,
-        'Registered': 0
+        'Registered': registeredUsers.length
       };
 
       enrollments.forEach(u => {
         if (!u) return;
-        if (u.password) {
-          statusCounts['Registered'] = (statusCounts['Registered'] || 0) + 1;
-        }
         const s = u.status || 'Pending';
         statusCounts[s] = (statusCounts[s] || 0) + 1;
       });
@@ -338,13 +336,9 @@ const Admin = () => {
       const term = searchTerm.toLowerCase();
       
       if (activeTab === 'enrollments' || activeTab === 'registered') {
-        const enrollments = stats.enrollments || [];
-        return enrollments.filter(u => {
+        const data = activeTab === 'registered' ? (stats.registeredUsers || []) : (stats.enrollments || []);
+        return data.filter(u => {
           if (!u) return false;
-          
-          // If in registered tab, only show users with password
-          if (activeTab === 'registered' && !u.password) return false;
-          // If in enrollments tab, show all (or could filter for those without password if preferred)
           
           return (
             (u.fullName || '').toLowerCase().includes(term) || 
@@ -352,6 +346,10 @@ const Admin = () => {
             (u.interested_Course || '').toLowerCase().includes(term) ||
             (typeof u.location === 'object' ? (u.location.address || '') : (u.location || '')).toLowerCase().includes(term)
           );
+        }).sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
         });
       }
       if (activeTab === 'visits') {
@@ -362,7 +360,11 @@ const Admin = () => {
             (v.city && v.city.toLowerCase().includes(term)) ||
             (v.pagePath && v.pagePath.toLowerCase().includes(term))
           )
-        );
+        ).sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
       }
       if (activeTab === 'shares') {
         const shares = stats.shares || [];
@@ -373,7 +375,11 @@ const Admin = () => {
             (s.userId?.fullName && s.userId.fullName.toLowerCase().includes(term)) ||
             (s.userId?.mobileNumber && s.userId.mobileNumber.includes(term))
           )
-        );
+        ).sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
       }
       if (activeTab === 'contacts') {
         const contacts = stats.contacts || [];
@@ -383,7 +389,11 @@ const Admin = () => {
             (c.email || '').toLowerCase().includes(term) ||
             (c.subject || '').toLowerCase().includes(term)
           )
-        );
+        ).sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
       }
       if (activeTab === 'materials') {
         const materials = stats.materials || [];
@@ -392,7 +402,11 @@ const Admin = () => {
             (m.title || '').toLowerCase().includes(term) ||
             (m.category || '').toLowerCase().includes(term)
           )
-        );
+        ).sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
       }
       return [];
     } catch (err) {
@@ -586,7 +600,7 @@ const Admin = () => {
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Registered Users</p>
-            <h3 className="text-2xl font-bold text-indigo-600">{stats?.enrollments?.filter(u => u.password).length || 0}</h3>
+            <h3 className="text-2xl font-bold text-indigo-600">{stats?.totalRegistered || 0}</h3>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
             <p className="text-gray-500 text-[10px] uppercase font-bold">Joined Students</p>
@@ -682,7 +696,7 @@ const Admin = () => {
                 }`}
               >
                 {tab === 'contacts' ? `Contacts (${stats?.totalContacts || 0})` : 
-                 tab === 'registered' ? `Registered (${stats?.enrollments?.filter(u => u.password).length || 0})` : 
+                 tab === 'registered' ? `Registered (${stats?.totalRegistered || 0})` : 
                  tab}
               </button>
             ))}
@@ -805,8 +819,18 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredData().map((user, idx) => (
-                    <tr key={user._id || `user-${idx}`} className="hover:bg-gray-50">
+                  {getFilteredData().length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-3xl">📁</span>
+                          <p>No {activeTab} found matching your search.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    getFilteredData().map((user, idx) => (
+                      <tr key={user._id || `user-${idx}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-bold text-gray-900">{user.fullName || 'N/A'}</div>
                         <div className="text-xs text-gray-500">{user.email || 'N/A'}</div>
@@ -864,7 +888,8 @@ const Admin = () => {
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A'}
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             )}
@@ -874,38 +899,58 @@ const Admin = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visitor</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location & ISP</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Distance</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Page</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Device & Browser</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredData().map((v, idx) => (
-                    <tr key={v._id || `visit-${idx}`} className="hover:bg-gray-50">
+                  {getFilteredData().length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-3xl">📁</span>
+                          <p>No {activeTab} found matching your search.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    getFilteredData().map((v, idx) => (
+                      <tr key={v._id || `visit-${idx}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{v.ip || 'Unknown'}</div>
-                        <div className="text-[10px] text-gray-500">{v.deviceType || 'Desktop'} • {v.referrer || 'Direct'}</div>
+                        <div className="text-[10px] text-gray-500">{v.pagePath || '/'} • {v.referrer || 'Direct'}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {v.city || 'Unknown'}, {v.region || ''}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{v.city || 'Unknown'}, {v.region || ''}</div>
+                        <div className="text-[10px] text-gray-500 flex items-center gap-1">
+                          🌐 {v.isp || 'Unknown ISP'}
+                          {v.mapUrl && (
+                            <a href={v.mapUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                              (Map)
+                            </a>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          v.distance < 50 ? 'bg-green-100 text-green-700' : 
-                          v.distance < 200 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                          parseFloat(v.distance) < 50 ? 'bg-green-100 text-green-700' : 
+                          parseFloat(v.distance) < 200 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
                         }`}>
-                          {v.distance ? `${v.distance} KM` : 'N/A'}
+                          {v.distance ? `${v.distance}` : 'N/A'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {v.pagePath || '/'}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-xs text-gray-900 font-medium">{v.deviceType || 'Desktop'}</div>
+                        <div className="text-[10px] text-gray-500">{v.browser || 'Unknown'} ({v.os || 'N/A'})</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                         {v.createdAt ? new Date(v.createdAt).toLocaleString('en-IN') : 'N/A'}
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             )}
@@ -921,8 +966,18 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredData().map((s, idx) => (
-                    <tr key={s._id || `share-${idx}`} className="hover:bg-gray-50">
+                  {getFilteredData().length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-10 text-center text-gray-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-3xl">📁</span>
+                          <p>No {activeTab} found matching your search.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    getFilteredData().map((s, idx) => (
+                      <tr key={s._id || `share-${idx}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-bold text-gray-900">
                           {s.userId?.fullName || 'Anonymous Visitor'}
@@ -945,7 +1000,8 @@ const Admin = () => {
                         {s.createdAt ? new Date(s.createdAt).toLocaleString('en-IN') : 'N/A'}
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             )}
@@ -961,8 +1017,18 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredData().map((c, idx) => (
-                    <tr key={c._id || `contact-${idx}`} className="hover:bg-gray-50">
+                  {getFilteredData().length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-10 text-center text-gray-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-3xl">📁</span>
+                          <p>No {activeTab} found matching your search.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    getFilteredData().map((c, idx) => (
+                      <tr key={c._id || `contact-${idx}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-bold text-gray-900">{c.name || 'N/A'}</div>
                         <div className="text-xs text-gray-500">{c.email || 'N/A'}</div>
@@ -987,7 +1053,8 @@ const Admin = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             )}
@@ -1004,8 +1071,18 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredData().map((m, idx) => (
-                    <tr key={m._id || `material-${idx}`} className="hover:bg-gray-50">
+                  {getFilteredData().length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-3xl">📁</span>
+                          <p>No {activeTab} found matching your search.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    getFilteredData().map((m, idx) => (
+                      <tr key={m._id || `material-${idx}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="text-sm font-bold text-gray-900">{m.title}</div>
                         <div className="text-xs text-gray-500 line-clamp-1 max-w-xs">{m.description}</div>
@@ -1048,17 +1125,10 @@ const Admin = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
-            )}
-
-            {getFilteredData().length === 0 && (
-              <div className="p-20 text-center">
-                <div className="text-4xl mb-4">🔍</div>
-                <h3 className="text-xl font-bold text-gray-400">No records found</h3>
-                <p className="text-gray-500">Try adjusting your search or switching tabs</p>
-              </div>
             )}
           </div>
         )}

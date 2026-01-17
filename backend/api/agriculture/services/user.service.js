@@ -9,6 +9,20 @@ const UserService = {
       throw error;
     }
   },
+  getUserByEmail: async (email) => {
+    try {
+      return await userModel.findOne({ email: email.toLowerCase() });
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateUser: async (userId, userData) => {
+    try {
+      return await userModel.findByIdAndUpdate(userId, userData, { new: true });
+    } catch (error) {
+      throw error;
+    }
+  },
   updateUserStatus: async (userId, status) => {
     try {
       const result = await userModel.findByIdAndUpdate(userId, { status }, { new: true });

@@ -12,6 +12,9 @@ const router = express.Router();
 // Auth Routes
 router.post('/auth/signup', authController.signup);
 router.post('/auth/login', authController.login);
+router.post('/auth/forgot-password', authController.forgotPassword);
+router.post('/auth/verify-otp', authController.verifyOTP);
+router.post('/auth/reset-password', authController.resetPassword);
 
 // User Registration
 router.post('/register', userController.createUser);

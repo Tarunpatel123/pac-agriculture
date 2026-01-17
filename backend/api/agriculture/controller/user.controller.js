@@ -71,54 +71,23 @@ const UserController = {
         interested_Course,
         instagramId,
         distance,
-        location
+        location,
+        userType: 'enrollment'
       };
 
-      const newUser = await userService.createUser(inserData);
+      // Check if user already exists with this email
+      const existingUser = await userService.getUserByEmail(email);
+      
+      let result;
+      if (existingUser) {
+        // If user exists, update their details instead of creating new
+        // This prevents the duplicate email error
+        result = await userService.updateUser(existingUser._id, inserData);
+      } else {
+        result = await userService.createUser(inserData);
+      }
 
-      // SMTP Transporter Configuration
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_PORT == 465, // true for 465, false for other ports
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-
-      const mailOptions = {
-        from: process.env.SMTP_USER,
-        to: process.env.RECEIVER_EMAIL,
-        subject: "New Student Enrollment - PAC Agriculture",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #eee; padding: 20px;">
-            <h2 style="color: #2e7d32;">New Student Enrollment Received</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Full Name:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${fullName}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Mobile:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${mobileNumber}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Email:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${email}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Class:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${currentClass}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Course:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${interested_Course}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Instagram ID:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${instagramId || 'Not provided'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;"><strong>Location:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;">${location ? location.address : 'Unknown'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;"><strong>Distance:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #1976d2;">${distance ? distance + ' KM' : 'N/A'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Referrer:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${referrer}</td></tr>
-            </table>
-          </div>
-        `,
-      };
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log("Email Error:", error);
-        } else {
-          console.log("Email sent:", info.response);
-        }
-      });
-
-      res.status(201).json(newUser);
+      res.status(existingUser ? 200 : 201).json(result);
 
     } catch (error) {
       console.error("Registration Error:", error);

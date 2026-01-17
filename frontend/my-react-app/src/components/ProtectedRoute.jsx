@@ -3,6 +3,14 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
     const location = useLocation();
+    const query = new URLSearchParams(location.search);
+    const isDirect = query.get('direct') === 'true';
+
+    // Allow access if it's a direct secret link (Admin panel has its own passcode)
+    if (isDirect) {
+        return children;
+    }
+
     const token = localStorage.getItem('pac_token');
     let user = null;
 

@@ -63,8 +63,9 @@ const Footer = () => {
         
         <div className="border-t border-white/5 pt-8 md:pt-12 flex flex-col md:flex-row justify-between items-center text-gray-500 text-sm gap-8">
           <div className="text-center md:text-left space-y-2 order-2 md:order-1">
-            <p className="font-bold text-gray-400">
-              <Link to="/admin-pac-portal?direct=true" className="hover:text-gray-500 cursor-default">©</Link> {new Date().getFullYear()} PAC Barwaha.
+            <p className="font-bold text-gray-400 flex items-center justify-center md:justify-start gap-1">
+              <Link to="/admin-pac-portal?direct=true" className="hover:text-green-500 transition-colors p-1 -m-1" title="Admin Access">©</Link> 
+              <span>{new Date().getFullYear()} PAC Barwaha.</span>
             </p>
             <p className="text-[10px] md:text-xs tracking-wider uppercase font-medium">
               Designed & Developed by <span className="text-green-500 font-black">Tarun Patel</span>

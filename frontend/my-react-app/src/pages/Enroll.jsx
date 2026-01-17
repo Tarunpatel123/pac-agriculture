@@ -31,7 +31,13 @@ const Enroll = () => {
         const res = await fetch(`${API_BASE_URL}/api/track-visit`, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ pagePath: '/enroll' })
+           body: JSON.stringify({ 
+             pagePath: '/enroll',
+             extraInfo: {
+               screenResolution: `${window.screen.width}x${window.screen.height}`,
+               language: navigator.language || 'Unknown'
+             }
+           })
          });
          const data = await res.json();
          if (data.success && data.distance !== 'N/A') {

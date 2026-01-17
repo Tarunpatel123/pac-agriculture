@@ -52,6 +52,17 @@ const userSchema = new mongoose.Schema(
     distance: {
       type: Number, // Distance in KM
       default: null
+    },
+    userType: {
+      type: String,
+      enum: ['enrollment', 'registered'],
+      default: 'enrollment'
+    },
+    resetPasswordOTP: {
+      type: String
+    },
+    resetPasswordExpires: {
+      type: Date
     }
   },
   {
