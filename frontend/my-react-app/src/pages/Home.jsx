@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Hero from '../components/Hero'
 import Card from '../components/Card'
@@ -9,6 +9,33 @@ import logoImage from '../assets/images/logo.jpeg'
 
 const Home = () => {
   const videoRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is logged in
+    const userStr = localStorage.getItem('pac_user');
+    const isAuthenticated = userStr && userStr !== 'undefined';
+
+    if (!isAuthenticated) {
+      const handleInteraction = (e) => {
+        // Prevent default only if it's a click on something interactive or anywhere
+        // The user said "click any thing", so we redirect on any click
+        e.preventDefault();
+        e.stopPropagation();
+        navigate('/login', { state: { from: { pathname: '/' } } });
+      };
+
+      // Add listener to the entire window for this component
+      window.addEventListener('click', handleInteraction, true);
+      window.addEventListener('keydown', handleInteraction, true);
+
+      return () => {
+        window.removeEventListener('click', handleInteraction, true);
+        window.removeEventListener('keydown', handleInteraction, true);
+      };
+    }
+  }, [navigate]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
