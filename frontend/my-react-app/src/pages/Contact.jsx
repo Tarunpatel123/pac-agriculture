@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 import { showCelebration } from '../utils/confetti';
 
 const Contact = () => {
@@ -14,7 +15,7 @@ const Contact = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,15 +26,9 @@ const Contact = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await axios.post(`${API_BASE_URL}/api/contact`, formData);
 
-      if (response.ok) {
+      if (response.status === 201 || response.status === 200) {
         showCelebration(
           'Message Received! ✉️',
           'हमने आपका संदेश प्राप्त कर लिया है। हम जल्द ही आपसे संपर्क करेंगे!'
@@ -44,15 +39,13 @@ const Contact = () => {
         setTimeout(() => {
           navigate('/');
         }, 3000);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to send message');
       }
     } catch (error) {
       console.error("Contact submit error:", error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'संदेश भेजने में विफल। कृपया बाद में प्रयास करें।';
       Swal.fire({
         title: 'Error!',
-        text: error.message || 'संदेश भेजने में विफल। कृपया बाद में प्रयास करें।',
+        text: errorMessage,
         icon: 'error',
         confirmButtonColor: '#dc2626'
       });

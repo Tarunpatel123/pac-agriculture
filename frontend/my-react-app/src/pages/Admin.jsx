@@ -25,7 +25,7 @@ const Admin = () => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || '';
   const ADMIN_SECRET = 'pac-admin-2026';
 
   const handleLogin = (e) => {

@@ -3,6 +3,26 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 
+const axios = require('axios');
+
+// Barwaha, MP Coordinates
+const BARWAHA_LAT = 22.2536;
+const BARWAHA_LON = 76.0407;
+
+// Function to calculate distance in KM
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in km
+    return distance.toFixed(2);
+};
+
 const signup = async (req, res) => {
     try {
         const { fullName, email, mobileNumber, password, location } = req.body;
@@ -14,16 +34,49 @@ const signup = async (req, res) => {
 
         // Check if user exists
         let user = await User.findOne({ email });
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        let distance = null;
+        let finalLocation = location;
+
+        // Calculate distance if location provided from Frontend
+        if (location && location.lat && location.lng) {
+            distance = calculateDistance(BARWAHA_LAT, BARWAHA_LON, location.lat, location.lng);
+        } else {
+            // Fallback to IP-based location if Frontend didn't send location
+            try {
+                let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+                // Clean IP address
+                if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
+                if (ip && ip.includes('::ffff:')) ip = ip.split(':').pop();
+
+                let fetchIp = ip;
+                if (fetchIp === '127.0.0.1' || fetchIp === '::1') fetchIp = '27.7.0.1'; // Test IP
+
+                const geoResponse = await axios.get(`http://ip-api.com/json/${fetchIp}`);
+                if (geoResponse.data.status === 'success') {
+                    const { city, regionName, lat, lon } = geoResponse.data;
+                    finalLocation = {
+                        lat,
+                        lng: lon,
+                        address: `${city}, ${regionName}` // Approximate
+                    };
+                    distance = calculateDistance(BARWAHA_LAT, BARWAHA_LON, lat, lon);
+                }
+            } catch (err) {
+                console.error("Geo fetch error (fallback):", err.message);
+            }
+        }
 
         if (user) {
             // If user exists but is only an enrollment (no password yet)
             if (user.userType === 'enrollment' || !user.password) {
                 user.password = hashedPassword;
                 user.userType = 'registered';
-                // Update location if provided
-                if (location) user.location = location;
+                // Update location if provided or calculated
+                if (finalLocation) user.location = finalLocation;
+                if (distance) user.distance = distance;
                 await user.save();
                 return res.status(201).json({ message: "Account created successfully from existing enrollment" });
             } else {
@@ -37,7 +90,8 @@ const signup = async (req, res) => {
             email,
             mobileNumber,
             password: hashedPassword,
-            location,
+            location: finalLocation,
+            distance,
             userType: 'registered'
         });
 
@@ -100,7 +154,7 @@ const forgotPassword = async (req, res) => {
 
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         user.resetPasswordOTP = otp;
         user.resetPasswordExpires = Date.now() + 600000; // 10 minutes expiry
         await user.save();
@@ -148,8 +202,8 @@ const verifyOTP = async (req, res) => {
         const { email, otp } = req.body;
         if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
 
-        const user = await User.findOne({ 
-            email, 
+        const user = await User.findOne({
+            email,
             resetPasswordOTP: otp,
             resetPasswordExpires: { $gt: Date.now() }
         });
@@ -172,8 +226,8 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const user = await User.findOne({ 
-            email, 
+        const user = await User.findOne({
+            email,
             resetPasswordOTP: otp,
             resetPasswordExpires: { $gt: Date.now() }
         });

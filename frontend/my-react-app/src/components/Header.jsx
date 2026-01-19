@@ -63,7 +63,7 @@ const Header = ({ user, onLogout }) => {
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareData.text + " " + shareData.url)}`;
         window.open(whatsappUrl, '_blank');
         
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '';
         await fetch(`${API_BASE_URL}/api/track-share`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -59,7 +59,7 @@ const Enroll = () => {
     setStatus('sending');
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || '';
       const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: {
