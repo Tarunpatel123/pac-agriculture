@@ -20,30 +20,10 @@ const submitContact = async (req, res) => {
         res.status(201).json({ message: "Contact message sent successfully" });
     } catch (error) {
         console.error("Contact Submit Error:", error);
-        res.status(500).json({ error: "Failed to send message" });
-    }
-};
-const Contact = async (req, res) => {
-    try {
-        console.log("Contact form submission received:", req.body);
-        const { name, email, subject, message } = req.body;
-        
-        if (!name || !email || !subject || !message) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        const newContact = new Contact({
-            name,
-            email,
-            subject,
-            message
+        res.status(500).json({ 
+            error: "Failed to send message", 
+            message: error.message 
         });
-
-        await newContact.save();
-        res.status(201).json({ message: "Contact message sent successfully" });
-    } catch (error) {
-        console.error("Contact Submit Error:", error);
-        res.status(500).json({ error: "Failed to send message" });
     }
 };
 
@@ -57,6 +37,7 @@ const deleteContact = async (req, res) => {
         await Contact.findByIdAndDelete(req.params.id);
         res.status(200).json({ message: "Contact message deleted" });
     } catch (error) {
+        console.error("Delete Contact Error:", error);
         res.status(500).json({ error: "Failed to delete contact" });
     }
 };
